@@ -1,0 +1,17 @@
+# Copy to android/key.properties and fill in. That file is gitignored: the
+# keystore and its passwords must never be committed.
+#
+# Create the keystore once, and keep it somewhere you will still have it in
+# five years. Losing it means you can never update the app on Google Play
+# under the same listing.
+#
+#   keytool -genkey -v -keystore blocktopus-upload.jks \
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#
+# In CI, write this file from secrets rather than committing it.
+
+storePassword=
+keyPassword=
+keyAlias=upload
+# Absolute path, or relative to android/app/
+storeFile=../../blocktopus-upload.jks

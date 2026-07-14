@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Same colour in both light and dark: the game has one look. -->
+    <item android:drawable="@color/blocktopus_bg" />
+</layer-list>

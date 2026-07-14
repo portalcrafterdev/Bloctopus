@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Matches the Flutter scaffold, so the handover to the first frame is
+         invisible. The default white here flashes hard against a dark game. -->
+    <item android:drawable="@color/blocktopus_bg" />
+</layer-list>

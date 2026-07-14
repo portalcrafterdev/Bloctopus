@@ -1,0 +1,30 @@
+name: blocktopus
+description: "Blocktopus: Block Puzzle. Drag shapes onto an 8x8 grid, fill rows and columns to clear them."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Save data. See section 12.
+  shared_preferences: ^2.3.3
+  # Sound. See section 11. Used through a preloaded pool, never per sound.
+  audioplayers: ^6.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/levels/
+    - assets/audio/
