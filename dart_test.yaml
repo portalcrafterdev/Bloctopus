@@ -1,0 +1,12 @@
+# `slow` covers the level validity sweep, which re-solves every shipped level.
+#
+# The exclusion deliberately does NOT live here as a `skip:`. A `skip:` under
+# `tags:` fires even when the tag is selected explicitly, so
+# `flutter test --tags slow` reported "All tests skipped" and exited 0 - a
+# green CI run that had proved nothing. The gate is chosen on the command line
+# instead, where asking for it and getting it are the same thing:
+#
+#   flutter test --exclude-tags slow    # the fast suite, what CI runs on push
+#   flutter test --tags slow            # the sweep, section 14's gate
+tags:
+  slow:
