@@ -4,6 +4,10 @@ import 'dart:io';
 import 'package:blocktopus/models/level.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+// The chapter parameters live with the generator that used them, so the shipped
+// files are checked against the same numbers rather than a second copy.
+import '../tool/generate_levels.dart' show paramsFor;
+
 /// Guards the difficulty curve rules from section 6.4. Cheap: it only reads
 /// the shipped JSON, it never runs the solver. The solver sweep lives in
 /// `level_validity_test.dart` and is tagged `slow`.
@@ -120,12 +124,36 @@ void main() {
         for (final l in levels) {
           expect(l.chapter, chapter);
         }
-        // Chapters 3 and up enforce a move limit; 1 and 2 do not.
-        final limited = levels.where((l) => l.moveLimit > 0).length;
+        // Every level draws from the goals its chapter declares, and nothing
+        // else. This is what keeps a chapter's identity intact once its goal
+        // list holds more than one entry.
+        final allowed = paramsFor(chapter).goals.toSet();
+        for (final l in levels) {
+          expect(
+            allowed.contains(l.goal),
+            isTrue,
+            reason: 'level ${l.id} has ${l.goal}, not in chapter $chapter',
+          );
+        }
+
+        // Chapters 3 and up enforce a move limit on every level; 1 and 2 are
+        // unlimited except for their bosses. Section 6.4 wants every 25th
+        // level to carry a tighter limit, and a boss with no limit at all is
+        // an ordinary level wearing a different banner.
+        final limited = levels.where((l) => l.moveLimit > 0).toList();
         if (chapter <= 2) {
-          expect(limited, 0, reason: 'chapter $chapter should be unlimited');
+          expect(
+            limited.map((l) => l.id % 25).toSet(),
+            <int>{0},
+            reason: 'only bosses may be limited in chapter $chapter',
+          );
+          expect(limited.length, 4, reason: 'four bosses a chapter');
         } else {
-          expect(limited, 100, reason: 'chapter $chapter should be limited');
+          expect(
+            limited.length,
+            100,
+            reason: 'chapter $chapter should be limited',
+          );
         }
       });
     });
