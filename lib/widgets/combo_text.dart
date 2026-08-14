@@ -112,11 +112,18 @@ class _ComboTextLayerState extends State<ComboTextLayer>
   late final Ticker _ticker;
   Duration _last = Duration.zero;
 
+  /// Held so [dispose] can tell this layer's registration apart from a
+  /// replacement's. A tear-off is a fresh closure each time it is written.
+  late final VoidCallback _wakeRef = _wake;
+
   @override
   void initState() {
     super.initState();
     _ticker = createTicker(_onTick);
-    widget.controller.onWake = _wake;
+    widget.controller.onWake = _wakeRef;
+    // Callouts may already be in flight: this layer's element is rebuilt
+    // whenever the stack around it gains or loses a child.
+    if (!widget.controller.isEmpty) _wake();
   }
 
   void _wake() {
@@ -137,7 +144,12 @@ class _ComboTextLayerState extends State<ComboTextLayer>
 
   @override
   void dispose() {
-    widget.controller.onWake = null;
+    // Only if it is still ours: Flutter inflates the replacement before
+    // unmounting this one, so clearing unconditionally would strand the live
+    // registration and freeze every callout on screen.
+    if (identical(widget.controller.onWake, _wakeRef)) {
+      widget.controller.onWake = null;
+    }
     _ticker.dispose();
     super.dispose();
   }

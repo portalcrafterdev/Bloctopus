@@ -623,6 +623,37 @@ void main() {
       expect(find.byType(BlastHammer), findsNothing);
     });
 
+    testWidgets('the cell the hammer hits is empty on the board it paints', (
+      tester,
+    ) async {
+      // Asserting the booster was spent only proves the blast was accepted.
+      // This reads the board the view is actually handed, so it fails if the
+      // block is still there to be drawn after the hammer has landed.
+      await pumpLevelOne(tester);
+      await tester.tap(find.text('Ink blast'));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final index = (await targetsOnLevelOne()).first;
+      BoardState painted() =>
+          tester.widget<BoardView>(find.byType(BoardView)).board;
+      expect(Cell.blastable(painted().kinds[index]), isTrue);
+
+      await tapCell(tester, index);
+      expect(
+        Cell.blastable(painted().kinds[index]),
+        isTrue,
+        reason: 'the block should survive until the hammer lands',
+      );
+
+      await tester.pump(BlastHammer.duration);
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(
+        painted().kinds[index],
+        Cell.empty,
+        reason: 'the hammered block is still on the board',
+      );
+    });
+
     testWidgets('a second tap during the swing cannot spend another booster', (
       tester,
     ) async {

@@ -255,11 +255,19 @@ class _ParticleLayerState extends State<ParticleLayer>
   // itself, which looks up an ancestor on a deactivated element.
   late final Ticker _ticker;
 
+  /// Held so [dispose] can tell this layer's registration apart from a
+  /// replacement's. A tear-off is a fresh closure each time it is written.
+  late final VoidCallback _wakeRef = _wake;
+
   @override
   void initState() {
     super.initState();
     _ticker = createTicker(_onTick);
-    widget.controller.onWake = _wake;
+    widget.controller.onWake = _wakeRef;
+    // The field may already be full. This layer's element gets rebuilt
+    // whenever the stack around it gains or loses a child, and the particles
+    // in flight at that moment belong to the controller, not to the old state.
+    if (!widget.controller.isEmpty) _ticker.start();
   }
 
   void _wake() {
@@ -273,7 +281,14 @@ class _ParticleLayerState extends State<ParticleLayer>
 
   @override
   void dispose() {
-    widget.controller.onWake = null;
+    // Only if it is still ours. When this layer's element is rebuilt at a
+    // different index, Flutter inflates the replacement before unmounting this
+    // one, so the replacement has already registered by the time we get here.
+    // Clearing unconditionally nulled out the live registration, and the field
+    // never woke again: particles froze mid-flight and piled up on the board.
+    if (identical(widget.controller.onWake, _wakeRef)) {
+      widget.controller.onWake = null;
+    }
     _ticker.dispose();
     super.dispose();
   }

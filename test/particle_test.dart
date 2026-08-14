@@ -133,6 +133,59 @@ void main() {
       });
     });
 
+    testWidgets('the field keeps draining when the layer moves in a stack', (
+      tester,
+    ) async {
+      // The game screen's stack adds and removes children as the player plays:
+      // the hammer, the drag layer, the tutorial. Anything after the change
+      // shifts index, so Flutter tears this layer's element down and inflates
+      // a fresh one. The replacement registers itself first and the old state
+      // is disposed after, so an unconditional clear in dispose nulls out the
+      // live registration and the field never ticks again: shards freeze
+      // mid-flight and pile up on the board.
+      final c = ParticleController();
+      var sibling = false;
+      late StateSetter setOuter;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) {
+                setOuter = setState;
+                return Stack(
+                  children: <Widget>[
+                    if (sibling)
+                      const Positioned.fill(
+                        child: ColoredBox(color: Color(0x00000000)),
+                      ),
+                    Positioned.fill(child: ParticleLayer(controller: c)),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      c.burstCell(const Offset(40, 40), palette.first, 40);
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(c.isEmpty, isFalse);
+
+      setOuter(() => sibling = true);
+      await tester.pump();
+
+      // Well past the longest particle life.
+      for (var frame = 0; frame < 120; frame++) {
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      expect(
+        c.isEmpty,
+        isTrue,
+        reason: 'the field froze: particles are stuck on screen',
+      );
+    });
+
     testWidgets('400 live particles render through a single painter', (
       tester,
     ) async {

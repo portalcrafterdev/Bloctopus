@@ -112,11 +112,19 @@ class _LineFlashLayerState extends State<LineFlashLayer>
   // itself, which looks up an ancestor on a deactivated element.
   late final Ticker _ticker;
 
+  /// Held so [dispose] can tell this layer's registration apart from a
+  /// replacement's. A tear-off is a fresh closure each time it is written.
+  late final VoidCallback _wakeRef = _wake;
+
   @override
   void initState() {
     super.initState();
     _ticker = createTicker(_onTick);
-    widget.controller.onWake = _wake;
+    widget.controller.onWake = _wakeRef;
+    // A flash may already be lit: this layer's element is rebuilt whenever the
+    // stack around it gains or loses a child. Leaving it unticked would strand
+    // a lit line on cells that are logically already empty.
+    if (!widget.controller.isEmpty) _ticker.start();
   }
 
   void _wake() {
@@ -130,7 +138,12 @@ class _LineFlashLayerState extends State<LineFlashLayer>
 
   @override
   void dispose() {
-    widget.controller.onWake = null;
+    // Only if it is still ours: Flutter inflates the replacement before
+    // unmounting this one, so clearing unconditionally would strand the live
+    // registration and leave the flash frozen over the board.
+    if (identical(widget.controller.onWake, _wakeRef)) {
+      widget.controller.onWake = null;
+    }
     _ticker.dispose();
     super.dispose();
   }

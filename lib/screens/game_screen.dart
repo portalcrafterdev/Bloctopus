@@ -647,9 +647,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           child: Stack(
             key: _stackKey,
             clipBehavior: Clip.none,
+            // Every child is keyed. Without keys Flutter matches them by
+            // index, and this list grows and shrinks as the player plays: the
+            // hammer, the drag layer, the tutorial and the pause veil all come
+            // and go. Any change shifts everything after it, tearing down and
+            // rebuilding element state that had no reason to move.
             children: [
               // The mascot sits behind the booster bar, bottom left.
               Positioned(
+                key: const ValueKey<String>('mascot'),
                 left: 8,
                 bottom: 2,
                 child: MascotView(
@@ -659,13 +665,20 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   lookAt: _mascotLookAt(),
                 ),
               ),
-              _content(g, level),
+              KeyedSubtree(
+                key: const ValueKey<String>('content'),
+                child: _content(g, level),
+              ),
               // The hammer waits at the edge while the player picks a block,
               // then the swing takes over. The two are never on screen at once.
               if (g.blastMode && _hammer == null)
-                const Positioned.fill(child: BlastHammerReady()),
+                const Positioned.fill(
+                  key: ValueKey<String>('hammer-ready'),
+                  child: BlastHammerReady(),
+                ),
               if (_hammer != null)
                 Positioned.fill(
+                  key: const ValueKey<String>('hammer'),
                   child: BlastHammer(
                     // Keyed on the cell, so aiming again builds a fresh swing
                     // rather than reusing the finished one's controller.
@@ -677,13 +690,28 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     },
                   ),
                 ),
-              Positioned.fill(child: ParticleLayer(controller: _particles)),
-              Positioned.fill(child: ComboTextLayer(controller: _combo)),
-              if (_dragSlot != null) _draggedPiece(g),
-              if (_tutorialShown) _tutorialOverlay(level),
+              Positioned.fill(
+                key: const ValueKey<String>('particles'),
+                child: ParticleLayer(controller: _particles),
+              ),
+              Positioned.fill(
+                key: const ValueKey<String>('combo'),
+                child: ComboTextLayer(controller: _combo),
+              ),
+              if (_dragSlot != null)
+                KeyedSubtree(
+                  key: const ValueKey<String>('drag'),
+                  child: _draggedPiece(g),
+                ),
+              if (_tutorialShown)
+                KeyedSubtree(
+                  key: const ValueKey<String>('tutorial'),
+                  child: _tutorialOverlay(level),
+                ),
               // Last, so it covers the tutorial, the drag layer and the juice.
               if (_paused)
                 Positioned.fill(
+                  key: const ValueKey<String>('pause'),
                   child: PauseOverlay(
                     levelId: level.id,
                     onResume: _resume,
