@@ -205,6 +205,22 @@ class SaveData extends ChangeNotifier {
     save();
   }
 
+  /// Tops [id] back up to [floor] if it has fallen below it. Returns true when
+  /// it actually granted something.
+  ///
+  /// Section 8 starts the player with three of each and refills only on a
+  /// three star clear or a boss level. That strands anyone who spends them:
+  /// the booster you need is the one you cannot earn without it. A floor is
+  /// the smallest fix that does not touch the rest of the economy - a player
+  /// who has saved more than the floor keeps all of it.
+  bool ensureBooster(String id, int floor) {
+    if (boosterCount(id) >= floor) return false;
+    boosters[id] = floor;
+    notifyListeners();
+    save();
+    return true;
+  }
+
   /// Records a finished level and returns the booster awarded, if any.
   String? recordResult(int levelId, int stars, int score) {
     final previous = starsFor(levelId);

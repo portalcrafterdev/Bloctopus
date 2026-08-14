@@ -678,6 +678,44 @@ void main() {
       );
     });
 
+    test('every level starts with at least two Ink blasts', () async {
+      // A player who spends them all used to be stranded: Ink blast is the one
+      // booster that rescues a board, and it is only earned by three starring
+      // a level, which is the thing you needed it for.
+      final save = await SaveData.load();
+      save.boosters[BoosterId.hammer] = 0;
+
+      final g = GameController(level: testLevel(), save: save);
+      expect(save.boosterCount(BoosterId.hammer), 2);
+
+      // Spending inside the level still costs.
+      g.startBlast();
+      save.spendBooster(BoosterId.hammer);
+      expect(save.boosterCount(BoosterId.hammer), 1);
+
+      // Retrying is starting again, so the floor applies again.
+      g.restart();
+      expect(save.boosterCount(BoosterId.hammer), 2);
+    });
+
+    test('a saved up stock is never trimmed down to the floor', () async {
+      final save = await SaveData.load();
+      save.boosters[BoosterId.hammer] = 7;
+      GameController(level: testLevel(), save: save);
+      expect(save.boosterCount(BoosterId.hammer), 7);
+    });
+
+    test('the floor is Ink blast only, not the whole economy', () async {
+      // Undo and Reshuffle are conveniences. Handing those out every level
+      // would make the earned economy meaningless.
+      final save = await SaveData.load();
+      save.boosters[BoosterId.undo] = 0;
+      save.boosters[BoosterId.refresh] = 0;
+      GameController(level: testLevel(), save: save);
+      expect(save.boosterCount(BoosterId.undo), 0);
+      expect(save.boosterCount(BoosterId.refresh), 0);
+    });
+
     testWidgets('an empty square does not start a swing', (tester) async {
       // The board reports a tap on every square, not only on the ones that can
       // be hit. Swinging at an empty one played the whole animation and broke

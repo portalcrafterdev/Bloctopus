@@ -72,11 +72,20 @@ class GameController extends ChangeNotifier {
   /// screen.
   String? awardedBooster;
 
+  /// Ink blast is topped back up to this at the start of every level.
+  ///
+  /// It is the one booster that rescues a board rather than a move, so it is
+  /// the one a stuck player reaches for, and running dry left them with no way
+  /// out at all. Undo and Reshuffle keep the earned economy: they are
+  /// conveniences, not rescues.
+  static const int kInkBlastFloor = 2;
+
   GameController({required this.level, required this.save}) {
     _seq = PieceSequence(level.seed, level.shapePool);
     board = BoardState.fromPreset(level.preset, level.seed);
     tray = _seq.trayAt(0);
     nextIndex = 3;
+    save.ensureBooster(BoosterId.hammer, kInkBlastFloor);
   }
 
   // -- derived state --------------------------------------------------------
@@ -310,6 +319,8 @@ class GameController extends ChangeNotifier {
     blastMode = false;
     awardedBooster = null;
     _undo.clear();
+    // Retrying is starting the level again, so the floor applies again.
+    save.ensureBooster(BoosterId.hammer, kInkBlastFloor);
     notifyListeners();
   }
 
