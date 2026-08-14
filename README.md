@@ -153,9 +153,17 @@ flutter build apk --release --split-per-abi
 Release builds run R8 with `android/app/proguard-rules.pro`. Store copy, the
 privacy policy and the Play data safety answers are in `store/`.
 
-CI (`.github/workflows/ci.yml`) runs format, analyze and the fast tests on
-every push; the level validity sweep and an app bundle build as separate jobs;
-and fails the build if the arm64 release APK goes over the 40 MB budget.
+There is no CI. Before a release, run the checks by hand:
+
+```
+dart format --output=none --set-exit-if-changed lib test tool
+flutter analyze
+flutter test --exclude-tags slow
+flutter test --tags slow                       # re-proves all 1500 levels
+```
+
+The last one is slow by design and is the one that matters most: it is what
+stops an unsolvable level shipping.
 
 ## Before the first release
 

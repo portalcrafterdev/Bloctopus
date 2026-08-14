@@ -593,7 +593,11 @@ void main() {
 
       await tester.tap(find.text('Ink blast'));
       await tester.pump(const Duration(milliseconds: 100));
-      expect(find.byType(BlastHammer), findsNothing, reason: 'nothing aimed at');
+      expect(
+        find.byType(BlastHammer),
+        findsNothing,
+        reason: 'nothing aimed at',
+      );
 
       await tapCell(tester, (await targetsOnLevelOne()).first);
 
@@ -655,8 +659,10 @@ void main() {
 
       final level = await LevelLoader.instance.load(1);
       final start = BoardState.fromPreset(level.preset, level.seed);
-      final empty = List<int>.generate(kCellCount, (i) => i)
-          .firstWhere((i) => start.kinds[i] == Cell.empty);
+      final empty = List<int>.generate(
+        kCellCount,
+        (i) => i,
+      ).firstWhere((i) => start.kinds[i] == Cell.empty);
       await tapCell(tester, empty);
 
       expect(find.byType(BlastHammer), findsNothing);

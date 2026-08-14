@@ -72,17 +72,20 @@ void main() {
         expect(shards.map((s) => s.y).toSet().length, greaterThan(1));
       });
 
-      test('the shards outlive the chips, so the break is the last thing seen', () {
-        final c = ParticleController()
-          ..shatterCell(const Offset(100, 100), palette.first, cell);
-        final shards = c.particles.where((p) => p.spin != 0);
-        final chips = c.particles.where((p) => p.spin == 0);
-        expect(chips, isNotEmpty);
-        expect(
-          shards.map((s) => s.maxLife).reduce(min),
-          greaterThan(chips.map((p) => p.maxLife).reduce(max)),
-        );
-      });
+      test(
+        'the shards outlive the chips, so the break is the last thing seen',
+        () {
+          final c = ParticleController()
+            ..shatterCell(const Offset(100, 100), palette.first, cell);
+          final shards = c.particles.where((p) => p.spin != 0);
+          final chips = c.particles.where((p) => p.spin == 0);
+          expect(chips, isNotEmpty);
+          expect(
+            shards.map((s) => s.maxLife).reduce(min),
+            greaterThan(chips.map((p) => p.maxLife).reduce(max)),
+          );
+        },
+      );
 
       test('every shard clears the square it came from', () {
         // The complaint this exists for: the first cut threw the quarters so
@@ -101,9 +104,8 @@ void main() {
         }
 
         for (final s in shards) {
-          final travelled = (Offset(s.x, s.y) + Offset(s.size, s.size) / 2 -
-                  centre)
-              .distance;
+          final travelled =
+              (Offset(s.x, s.y) + Offset(s.size, s.size) / 2 - centre).distance;
           expect(
             travelled,
             greaterThan(cell),

@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -493,7 +493,10 @@ class _NodeDisc extends StatelessWidget {
                     color: unlocked ? textPrimary : textDim,
                     shadows: unlocked
                         ? <Shadow>[
-                            Shadow(color: shift(-0.3), offset: const Offset(0, 1)),
+                            Shadow(
+                              color: shift(-0.3),
+                              offset: const Offset(0, 1),
+                            ),
                           ]
                         : null,
                   ),

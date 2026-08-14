@@ -20,7 +20,10 @@ class BlockField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
-      child: CustomPaint(painter: _BlockFieldPainter(depth), size: Size.infinite),
+      child: CustomPaint(
+        painter: _BlockFieldPainter(depth),
+        size: Size.infinite,
+      ),
     );
   }
 }

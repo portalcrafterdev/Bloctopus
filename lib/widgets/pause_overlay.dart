@@ -100,7 +100,10 @@ class PauseOverlay extends StatelessWidget {
                   const SizedBox(height: 14),
                   // Honest rather than reassuring: the board is not persisted,
                   // so quitting really does throw this attempt away.
-                  const Text('Leaving now starts this level over', style: T.dim),
+                  const Text(
+                    'Leaving now starts this level over',
+                    style: T.dim,
+                  ),
                 ],
               ),
             ),

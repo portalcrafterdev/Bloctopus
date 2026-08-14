@@ -321,11 +321,7 @@ class _ParticlePainter extends CustomPainter {
         canvas.rotate(p.angle);
         canvas.drawRRect(
           RRect.fromRectAndRadius(
-            Rect.fromCenter(
-              center: Offset.zero,
-              width: p.size,
-              height: p.size,
-            ),
+            Rect.fromCenter(center: Offset.zero, width: p.size, height: p.size),
             Radius.circular(p.size * kCellRadiusFactor),
           ),
           paint,

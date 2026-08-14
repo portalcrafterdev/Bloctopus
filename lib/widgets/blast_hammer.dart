@@ -38,7 +38,12 @@ void _drawHammer(
   );
   canvas.drawRRect(
     RRect.fromRectAndRadius(
-      Rect.fromLTWH(handleW * 0.4, -handleW * 0.34, handleL * 0.7, handleW * 0.3),
+      Rect.fromLTWH(
+        handleW * 0.4,
+        -handleW * 0.34,
+        handleL * 0.7,
+        handleW * 0.3,
+      ),
       Radius.circular(handleW * 0.2),
     ),
     fill(Colors.white.withValues(alpha: 0.16)),
@@ -103,7 +108,8 @@ class _BlastHammerReadyState extends State<BlastHammerReady>
     return IgnorePointer(
       child: AnimatedBuilder(
         animation: _bob,
-        builder: (context, _) => CustomPaint(painter: _ReadyPainter(_bob.value)),
+        builder: (context, _) =>
+            CustomPaint(painter: _ReadyPainter(_bob.value)),
       ),
     );
   }
@@ -280,6 +286,5 @@ class _HammerPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_HammerPainter old) =>
-      old.t != t || old.target != target;
+  bool shouldRepaint(_HammerPainter old) => old.t != t || old.target != target;
 }

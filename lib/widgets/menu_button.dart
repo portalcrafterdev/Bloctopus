@@ -55,11 +55,7 @@ class MenuButton extends StatelessWidget {
             : Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    icon,
-                    size: 20,
-                    color: filled ? textPrimary : textLilac,
-                  ),
+                  Icon(icon, size: 20, color: filled ? textPrimary : textLilac),
                   const SizedBox(width: 8),
                   // Flexible, not bare: the row sizes to its content, so a
                   // label at a large system font would otherwise carry the row
