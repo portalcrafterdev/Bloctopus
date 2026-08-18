@@ -15,6 +15,11 @@ dependencies:
   shared_preferences: ^2.3.3
   # Sound. See section 11. Used through a preloaded pool, never per sound.
   audioplayers: ^6.1.0
+  # Ads. Deliberately outside the section 2 allowlist, and outside "no network
+  # calls anywhere in v1": the owner answered section 17's open question about
+  # ads by supplying live AdMob unit ids. Everything ad related lives under
+  # lib/ads/ so the rest of the game stays offline and unaware of it.
+  google_mobile_ads: ^9.1.0
 
 dev_dependencies:
   flutter_test:

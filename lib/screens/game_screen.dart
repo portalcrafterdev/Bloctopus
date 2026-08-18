@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' show Ticker;
 
+import '../ads/ad_service.dart';
 import '../app/theme.dart';
 import '../game/audio.dart';
 import '../game/board_state.dart';
@@ -21,6 +22,7 @@ import '../widgets/mascot_view.dart';
 import '../widgets/particle_layer.dart';
 import '../widgets/pause_overlay.dart';
 import '../widgets/piece_view.dart';
+import '../widgets/reward_offer.dart';
 import '../widgets/tray_view.dart';
 import 'result_screen.dart';
 import 'settings_screen.dart';
@@ -93,6 +95,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       });
       game.addListener(_onGameChanged);
       AudioService.instance.playMusic(Music.game);
+      // Start fetching a rewarded ad now, not when a booster runs dry. The
+      // chip only offers one it already has, so a load that starts at the
+      // moment of need would arrive after the player had given up on it.
+      AdService.instance.warmRewarded();
       _maybeShowTutorial(level);
     } catch (e) {
       if (mounted) setState(() => _loadError = e);
@@ -411,6 +417,30 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   // -- boosters -------------------------------------------------------------
 
+  /// Offers a rewarded ad for one of [id], and grants it only if it is earned.
+  ///
+  /// Asks first. A rewarded ad has to be the player's decision - both because
+  /// an ad that starts on a mis-tap is the fastest way to a one star review,
+  /// and because Google requires the choice to be explicit.
+  Future<void> _earnBooster(String id) async {
+    AudioService.instance.play(Sfx.tap, volume: 0.6);
+    final agreed = await showRewardOffer(context, boosterId: id);
+    if (!mounted || agreed != true) return;
+
+    final earned = await AdService.instance.showRewarded();
+    if (!mounted) return;
+    if (!earned) {
+      // Closed early, or the ad fell over. Nothing is granted and nothing is
+      // said about it: the player already knows they backed out.
+      setState(() {});
+      return;
+    }
+    widget.save.awardBooster(id);
+    AudioService.instance.play(Sfx.booster);
+    Haptics.medium();
+    setState(() {});
+  }
+
   void _useBooster(String id) {
     final g = _game;
     if (g == null) return;
@@ -564,6 +594,18 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       save: widget.save,
     );
     if (!mounted) return;
+
+    // After the sheet is read and dismissed, never before it and never during
+    // a level. The player has finished with this board and has not yet been
+    // handed the next one, which is the only moment a full screen ad does not
+    // interrupt something.
+    //
+    // The music is stopped rather than paused: the ad takes the screen, the
+    // lifecycle observer sees the app go behind it, and whichever track plays
+    // next is chosen by the screen we land on anyway.
+    await AdService.instance.showInterstitial();
+    if (!mounted) return;
+
     switch (action) {
       case ResultAction.next:
         final nextId = g.level.id + 1;
@@ -818,6 +860,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             blastActive: g.blastMode,
             onUse: _useBooster,
             onCancelBlast: g.cancelBlast,
+            canEarn: AdService.instance.rewardedReady,
+            onEarn: _earnBooster,
           ),
           const SizedBox(height: 56), // the mascot's strip
         ],

@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../ads/ad_service.dart';
 import '../app/theme.dart';
 import '../game/audio.dart';
 import '../models/save_data.dart';
@@ -29,6 +30,10 @@ class _SplashScreenState extends State<SplashScreen> {
     final save = await SaveData.load();
     Haptics.settings = save.settings;
     await AudioService.instance.init(save.settings);
+    // Not awaited. Starting the ads SDK reaches the network, and on a cold or
+    // offline first run that can take far longer than the splash should ever
+    // last. Nothing in the game waits on an ad, so nothing waits on this.
+    unawaited(AdService.instance.init());
 
     // Never flash: hold the splash for at least 700ms.
     final elapsed = DateTime.now().difference(started);

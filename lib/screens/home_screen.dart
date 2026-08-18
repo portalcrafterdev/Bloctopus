@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../app/theme.dart';
 import '../game/audio.dart';
 import '../models/save_data.dart';
+import '../widgets/banner_ad_view.dart';
 import '../widgets/block_field.dart';
 import '../widgets/chunky_button.dart';
 import '../widgets/mascot_view.dart';
@@ -193,6 +194,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
                   ),
+                  // Below the menu and inside the SafeArea, so it never
+                  // overlaps the buttons and never sits under the gesture bar.
+                  const BannerAdView(),
                 ],
               ),
             ),

@@ -31,6 +31,15 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- AdMob. The SDK reads the app id from here at startup and throws if
+             it is missing, so this stops being optional the moment the plugin
+             is a dependency. It has to match AdIds.androidAppId, and a test
+             asserts that the two still agree, because nothing at runtime would
+             tell you they had drifted apart: ads would simply never fill. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-8244651657160773~3302542021" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

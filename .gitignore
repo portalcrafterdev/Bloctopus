@@ -48,3 +48,7 @@ app.*.map.json
 android/key.properties
 *.jks
 *.keystore
+
+# Golden test failure artefacts. Written by `flutter test` whenever a golden
+# does not match, regenerated on the next failure, and never worth committing.
+test/failures/

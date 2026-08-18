@@ -4,6 +4,18 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<!-- AdMob. Required: the SDK raises on launch without it, so an iOS build
+	     would crash at startup rather than simply show no ads.
+
+	     This is Google's public TEST app id, not ours, and that is deliberate.
+	     An AdMob app id is per platform, and only the Android app has been
+	     registered so far. Serving the Android id here would not fill, so iOS
+	     runs on test inventory until a second app is created in the AdMob
+	     console. Replace this value and the ios ids in lib/ads/ad_ids.dart at
+	     the same time; AdIds.adsAreLive is what decides, and it stays false on
+	     iOS until those are filled in. -->
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-3940256099942544~1458002511</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

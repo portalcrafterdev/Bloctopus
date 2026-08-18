@@ -7,6 +7,7 @@ import '../app/theme.dart';
 import '../game/audio.dart';
 import '../models/level.dart';
 import '../models/save_data.dart';
+import '../widgets/banner_ad_view.dart';
 import '../widgets/block_field.dart';
 import '../widgets/mascot_view.dart';
 import 'game_screen.dart';
@@ -165,6 +166,9 @@ class _MapScreenState extends State<MapScreen> {
                         ],
                       ),
                     ),
+                    // Anchored under the scrolling path rather than floating
+                    // over it, so it never covers a level node.
+                    const BannerAdView(),
                   ],
                 ),
               ),
