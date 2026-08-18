@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import 'app/router.dart';
 import 'app/theme.dart';
+import 'game/audio.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,8 +25,49 @@ void main() {
   runApp(const BlocktopusApp());
 }
 
-class BlocktopusApp extends StatelessWidget {
+/// Stateful only so it can watch the app lifecycle.
+///
+/// Flutter keeps running when the app is not on screen, and audioplayers keeps
+/// playing with it, so the music carried on from a pocket unless something
+/// told it not to. Nothing did: this is the app's only lifecycle observer.
+class BlocktopusApp extends StatefulWidget {
   const BlocktopusApp({super.key});
+
+  @override
+  State<BlocktopusApp> createState() => _BlocktopusAppState();
+}
+
+class _BlocktopusAppState extends State<BlocktopusApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      // Deliberately not [AppLifecycleState.inactive]. That one fires for
+      // anything that merely covers the app for a moment - the notification
+      // shade, the app switcher, a permission dialog - and cutting the music
+      // for each of those would stutter it during ordinary use.
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+        AudioService.instance.handleAppHidden();
+      case AppLifecycleState.resumed:
+        AudioService.instance.handleAppResumed();
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.detached:
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

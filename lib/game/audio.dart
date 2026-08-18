@@ -93,6 +93,26 @@ class AudioService {
     ),
   );
 
+  /// The music takes no audio focus either.
+  ///
+  /// Asking for `AUDIOFOCUS_GAIN` puts the track on the system focus stack,
+  /// and anything landing on top of that stack pushes it into
+  /// `LOSS_TRANSIENT_CAN_DUCK`. A single notification is enough. audioplayers
+  /// answers any loss by pausing, and the regrant that would start it again
+  /// arrives unreliably - caught on the device with systemui sitting above us
+  /// and our own entry reading `notified: false`. So one notification could
+  /// silence the music until the app was restarted, which on a phone that
+  /// gets notifications is most of the time.
+  ///
+  /// Claiming nothing keeps the bed playing underneath whatever else the
+  /// system is doing, which is what an ambient loop should do. It does not
+  /// need focus to stop at the right moment either: [handleAppHidden] stops it
+  /// when the app leaves the screen, and leaving the screen is the case that
+  /// holding focus was protecting.
+  static final AudioContext _musicContext = AudioContext(
+    android: const AudioContextAndroid(audioFocus: AndroidAudioFocus.none),
+  );
+
   /// Every sound that gets its own preloaded player, section 11.1.
   static final List<String> _sfxKeys = <String>[
     Sfx.pickup,
@@ -161,6 +181,11 @@ class AudioService {
   @visibleForTesting
   String musicIntent = 'none';
 
+  /// How many times the app has reported going off screen. The wiring is what
+  /// was missing altogether, so a test asserts the app still reports it.
+  @visibleForTesting
+  int hiddenCount = 0;
+
   @visibleForTesting
   int failureCountFor(String key) => _failures[key] ?? 0;
 
@@ -184,9 +209,11 @@ class AudioService {
     _desiredMusic = null;
     _musicToken = 0;
     musicIntent = 'none';
+    hiddenCount = 0;
     _duckTimer?.cancel();
     _duckTimer = null;
     _ducked = false;
+    _pausedForBackground = false;
     _settings = GameSettings();
   }
 
@@ -387,6 +414,7 @@ class AudioService {
     final token = ++_musicToken;
     try {
       _music ??= AudioPlayer(playerId: 'music');
+      await _music!.setAudioContext(_musicContext);
       await _music!.setReleaseMode(ReleaseMode.loop);
       await _music!.setVolume(_musicVolume);
       await _music!.play(AssetSource('audio/$key.$_ext'));
@@ -438,6 +466,35 @@ class AudioService {
     } catch (_) {
       _currentMusic = null;
     }
+  }
+
+  /// Whether backgrounding the app is what paused the music.
+  ///
+  /// Without this, coming back would resume a track the in-game pause menu had
+  /// deliberately stopped, and the board would sit paused with the music
+  /// playing over it.
+  bool _pausedForBackground = false;
+
+  /// The app has gone behind something, or off screen entirely.
+  ///
+  /// Flutter keeps running when the app is not visible and audioplayers keeps
+  /// playing, so nothing stops the music unless it is told to. Only a track
+  /// that is genuinely playing is touched: one already paused by the pause
+  /// menu is left exactly as it is.
+  void handleAppHidden() {
+    hiddenCount++;
+    final music = _music;
+    if (music == null || _currentMusic == null) return;
+    if (music.state != PlayerState.playing) return;
+    _pausedForBackground = true;
+    pauseMusic();
+  }
+
+  /// Back in front of the player. Resumes only what [handleAppHidden] paused.
+  void handleAppResumed() {
+    if (!_pausedForBackground) return;
+    _pausedForBackground = false;
+    resumeMusic();
   }
 
   void stopMusic() {

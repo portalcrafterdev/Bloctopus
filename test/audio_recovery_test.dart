@@ -82,6 +82,8 @@ void main() {
     });
   });
 
+  _backgroundGroup();
+
   group('volume is applied', () {
     test('a zero effects slider silences effects without breaking them', () {
       audio.updateSettings(GameSettings(sfxVolume: 0));
@@ -91,6 +93,57 @@ void main() {
 
       audio.updateSettings(GameSettings(sfxVolume: 1));
       expect(audio.isSilencedForTesting(Sfx.place), isFalse);
+    });
+  });
+}
+
+/// Flutter keeps running when the app is off screen, and audioplayers keeps
+/// playing with it. Nothing paused the music when the player put the phone
+/// away, so the game sang on from a pocket.
+void _backgroundGroup() {
+  final audio = AudioService.instance;
+
+  setUp(audio.debugReset);
+
+  group('backgrounding', () {
+    test(
+      'hiding the app asks the music to stop, and returning restarts it',
+      () {
+        audio.updateSettings(GameSettings());
+        audio.playMusic(Music.menu);
+
+        audio.handleAppHidden();
+        audio.handleAppResumed();
+
+        // With no backend there is no live player to pause, so the pair is a
+        // no-op rather than a pause/resume. What matters is that neither call
+        // throws and neither leaves the track given up on.
+        expect(audio.isSilencedForTesting(Music.menu), isFalse);
+      },
+    );
+
+    test('returning does not resume music this did not pause', () {
+      // The in-game pause menu pauses the music on purpose. Backgrounding
+      // while already paused, then coming back, must leave the board paused
+      // and silent rather than humming along behind the overlay.
+      audio.updateSettings(GameSettings());
+      audio.playMusic(Music.menu);
+      audio.pauseMusic();
+
+      audio.handleAppHidden();
+      audio.handleAppResumed();
+
+      expect(
+        audio.musicIntent,
+        isNot('resume'),
+        reason: 'coming back must not undo a deliberate pause',
+      );
+    });
+
+    test('a resume with nothing hidden is harmless', () {
+      audio.updateSettings(GameSettings());
+      audio.handleAppResumed();
+      expect(audio.musicIntent, isNot('resume'));
     });
   });
 }
