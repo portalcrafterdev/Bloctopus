@@ -39,9 +39,83 @@ class AudioService {
 
   static final AudioService instance = AudioService._();
 
-  static const int _poolSize = 6;
-  final List<AudioPlayer> _pool = <AudioPlayer>[];
-  int _next = 0;
+  /// One player per sound, loaded once, rather than a round robin pool.
+  ///
+  /// The pool set the source again on every play, and `setSource` is the one
+  /// expensive call in the chain: it resolves the asset, copies it out of the
+  /// bundle on first use, stats that copy, hands the path to the platform and
+  /// then waits for a `prepared` event to come back. Paying that per placement
+  /// put the sound audibly behind the block. Loading each source once up
+  /// front leaves `stop`, `setVolume` and `resume`, which are all cheap
+  /// native calls.
+  ///
+  /// A round robin also truncated sounds. A three line clear that collects a
+  /// star fires six effects inside 210ms, which wrapped the six player pool
+  /// and stopped the oldest sound to reuse its player. A player per sound
+  /// cannot collide with a different sound at all.
+  ///
+  /// Keyed on the futures rather than the players, so that a sound played
+  /// before its warm up finishes waits for that same load instead of starting
+  /// a second one.
+  final Map<String, Future<AudioPlayer?>> _players =
+      <String, Future<AudioPlayer?>>{};
+
+  /// What each player's volume was last set to, so an unchanged level costs
+  /// nothing. Most sounds always play at the same level.
+  final Map<String, double> _volumes = <String, double>{};
+
+  /// False when there is no audio backend, which is the case under
+  /// `flutter test`.
+  bool _hasBackend = false;
+
+  /// Effects ask for no audio focus at all.
+  ///
+  /// audioplayers requests `AUDIOFOCUS_GAIN` by default, which is a claim to
+  /// be the only thing the user is listening to. Android grants it by telling
+  /// the previous holder its focus is gone for good, and audioplayers answers
+  /// a non transient loss by pausing that player. The previous holder is our
+  /// own music, so the first tap on a button, the first block placed, paused
+  /// the music for the rest of the session.
+  ///
+  /// That is what made the music slider and the music toggle look broken:
+  /// both worked, there was simply nothing left playing for them to act on,
+  /// and turning the toggle back on restarted a track that the very next
+  /// effect paused again.
+  ///
+  /// Effects are short and belong on top of the music, so they claim nothing.
+  /// The music player keeps the default gain, so the game still takes focus
+  /// once, when the music itself starts.
+  static final AudioContext _sfxContext = AudioContext(
+    android: const AudioContextAndroid(
+      contentType: AndroidContentType.sonification,
+      usageType: AndroidUsageType.game,
+      audioFocus: AndroidAudioFocus.none,
+    ),
+  );
+
+  /// Every sound that gets its own preloaded player, section 11.1.
+  static final List<String> _sfxKeys = <String>[
+    Sfx.pickup,
+    Sfx.place,
+    Sfx.invalid,
+    Sfx.combo,
+    Sfx.booster,
+    Sfx.ink,
+    Sfx.star,
+    Sfx.levelWin,
+    Sfx.levelFail,
+    Sfx.blub,
+    Sfx.tap,
+    for (var i = 1; i <= 8; i++) Sfx.clear(i),
+  ];
+
+  /// A sound missing from [_sfxKeys] still plays: it loads on first use like
+  /// any other. What it loses is the warm up, so the first time it is heard it
+  /// pays the full load in the middle of play, which for the pitch ladder is
+  /// exactly the wrong moment. A test walks the shipped files against this
+  /// list so a new sound cannot quietly miss it.
+  @visibleForTesting
+  static List<String> get preloadedKeys => List<String>.unmodifiable(_sfxKeys);
 
   AudioPlayer? _music;
 
@@ -78,6 +152,15 @@ class AudioService {
 
   void _noteSuccess(String key) => _failures.remove(key);
 
+  /// What the app last asked of the music, whether or not there was a backend
+  /// to carry it out.
+  ///
+  /// Under `flutter test` there is no player to observe, so intent is the only
+  /// thing a test can assert on. It is enough for the question that matters:
+  /// whether a screen remembered to ask.
+  @visibleForTesting
+  String musicIntent = 'none';
+
   @visibleForTesting
   int failureCountFor(String key) => _failures[key] ?? 0;
 
@@ -96,15 +179,22 @@ class AudioService {
   @visibleForTesting
   void debugReset() {
     _failures.clear();
+    _volumes.clear();
     _currentMusic = null;
     _desiredMusic = null;
     _musicToken = 0;
+    musicIntent = 'none';
+    _duckTimer?.cancel();
+    _duckTimer = null;
+    _ducked = false;
     _settings = GameSettings();
   }
 
   /// Music ducks to 40% while any SFX is playing.
   static const double _duckedVolume = 0.4;
-  DateTime _duckUntil = DateTime.fromMillisecondsSinceEpoch(0);
+  static const Duration _duckWindow = Duration(milliseconds: 280);
+  bool _ducked = false;
+  Timer? _duckTimer;
 
   /// The player's music slider is the ceiling for everything music related.
   double get _musicVolume => _settings.musicVolume;
@@ -123,16 +213,60 @@ class AudioService {
     _settings = settings;
     if (_ready) return;
     _ready = true;
+    // Probe with one player before committing to the rest. An AudioPlayer
+    // registers an event channel on construction, and with no plugin behind it
+    // that channel throws asynchronously, outside any try/catch here. Under
+    // `flutter test` this costs one stray channel instead of nineteen.
+    if (await _playerFor(_sfxKeys.first) == null) return;
+    _hasBackend = true;
+    unawaited(_warmUp());
+  }
+
+  /// Loads the remaining sounds one at a time, in the background.
+  ///
+  /// Both halves of that matter. Loading all nineteen at once was the first
+  /// attempt and it silently lost eight of them: `setSource` waits on a
+  /// `prepared` event from the platform, and firing nineteen of those
+  /// concurrently is more than the backend reliably answers. On the device
+  /// exactly eleven samples reached SoundPool and the pitch ladder never made
+  /// a sound. Serially, nothing competes. In the background, nothing waits:
+  /// the splash screen carries on and a sound played before its turn comes up
+  /// simply loads then, through the same future.
+  Future<void> _warmUp() async {
+    for (final key in _sfxKeys) {
+      await _playerFor(key);
+    }
+  }
+
+  /// The player for [key], loading it on first use.
+  ///
+  /// [ReleaseMode.stop] is what makes the load stick: `release` would free the
+  /// source after every play and hand the expensive work straight back to the
+  /// next one.
+  Future<AudioPlayer?> _playerFor(String key) =>
+      _players.putIfAbsent(key, () => _create(key));
+
+  Future<AudioPlayer?> _create(String key) async {
     try {
-      for (var i = 0; i < _poolSize; i++) {
-        final p = AudioPlayer(playerId: 'sfx_$i');
-        await p.setReleaseMode(ReleaseMode.stop);
-        _pool.add(p);
-      }
+      final p = AudioPlayer(playerId: 'sfx_$key');
+      // Before the source is set: on Android the context decides which
+      // SoundPool the sample is loaded into.
+      await p.setAudioContext(_sfxContext);
+      await p.setReleaseMode(ReleaseMode.stop);
+      // SoundPool on Android, which is built for exactly this: short effects,
+      // decoded once and fired with a native call. A no-op on iOS, where
+      // there is only one player mode.
+      await p.setPlayerMode(PlayerMode.lowLatency);
+      await p.setSource(AssetSource('audio/$key.$_ext'));
+      return p;
     } catch (_) {
-      // No audio backend, for instance under `flutter test`. Play calls below
-      // guard on an empty pool and stay silent.
-      _pool.clear();
+      // Dropped rather than remembered as a failure, so the next attempt to
+      // play this sound loads it again. A sound that cannot be loaded must
+      // degrade to being late, never to being silent for the whole session.
+      // The removed future is the one running right now, and it completes with
+      // null a line below; ignoring it says so rather than awaiting itself.
+      _players.remove(key)?.ignore();
+      return null;
     }
   }
 
@@ -167,6 +301,11 @@ class AudioService {
     }
     // Genuinely playing: move the volume on the live player rather than
     // restarting the track, so dragging the slider does not stutter the loop.
+    // Any duck in progress is abandoned rather than fought with, so the
+    // slider is what the player hears.
+    _duckTimer?.cancel();
+    _duckTimer = null;
+    _ducked = false;
     unawaited(_setMusicVolume(music, _musicVolume));
   }
 
@@ -176,20 +315,32 @@ class AudioService {
   void play(String key, {double volume = 1}) => unawaited(_play(key, volume));
 
   Future<void> _play(String key, double volume) async {
-    if (!_settings.sfx || _pool.isEmpty || _givenUpOn(key)) return;
+    if (!_settings.sfx || !_hasBackend || _givenUpOn(key)) return;
     // The per-call volume is the sound's place in the mix; the slider is the
     // player's ceiling over the whole mix. They multiply.
     final level = volume * _settings.sfxVolume;
     if (level <= 0) return;
-    final player = _pool[_next = (_next + 1) % _pool.length];
+    final player = await _playerFor(key);
+    if (player == null) {
+      _noteFailure(key);
+      return;
+    }
     try {
+      // Rewind rather than reload. With the source already set this is a
+      // pause and a seek to zero, which is also what frees the sound to be
+      // fired again from the top.
       await player.stop();
-      await player.setVolume(level);
-      await player.play(AssetSource('audio/$key.$_ext'));
+      if (_volumes[key] != level) {
+        await player.setVolume(level);
+        _volumes[key] = level;
+      }
+      await player.resume();
       _noteSuccess(key);
       _duck();
     } catch (_) {
       _noteFailure(key);
+      // The player's volume is no longer known to be what was last asked for.
+      _volumes.remove(key);
     }
   }
 
@@ -212,17 +363,14 @@ class AudioService {
     if (clearStreak >= 3) play(Sfx.combo, volume: 0.7);
   }
 
-  /// The three star sounds on the result screen, 220ms apart.
-  void playStars(int stars) => unawaited(_stars(stars));
+  // There is deliberately no `playStars` here. The result screen sequences the
+  // three star sounds itself, in the same loop that reveals each star, because
+  // a sound scheduled independently of the animation drifts away from it.
 
-  Future<void> _stars(int stars) async {
-    for (var i = 0; i < stars; i++) {
-      play(Sfx.star, volume: 0.9);
-      await Future<void>.delayed(const Duration(milliseconds: 220));
-    }
+  void playMusic(String key) {
+    musicIntent = 'play';
+    unawaited(_playMusic(key));
   }
-
-  void playMusic(String key) => unawaited(_playMusic(key));
 
   Future<void> _playMusic(String key) async {
     // Remembered even when nothing can play it, so that enabling music later
@@ -232,7 +380,7 @@ class AudioService {
     // channel throws asynchronously when no plugin is registered - outside any
     // try/catch here. An empty pool means init() found no audio backend, so
     // never construct a player at all in that case.
-    if (_pool.isEmpty) return;
+    if (!_hasBackend) return;
     if (!_settings.music || _givenUpOn(key)) return;
     if (_currentMusic == key) return;
 
@@ -262,6 +410,7 @@ class AudioService {
   /// to think. `_currentMusic` stays set, because a paused track is still the
   /// track that belongs on this screen.
   void pauseMusic() {
+    musicIntent = 'pause';
     final music = _music;
     if (music == null || _currentMusic == null) return;
     try {
@@ -276,6 +425,7 @@ class AudioService {
   /// from the beginning when there is nothing to resume, which is what happens
   /// if the player turned music off and on again while paused.
   void resumeMusic() {
+    musicIntent = 'resume';
     if (!_settings.music) return;
     final music = _music;
     if (music == null || _currentMusic == null) {
@@ -291,10 +441,15 @@ class AudioService {
   }
 
   void stopMusic() {
+    musicIntent = 'stop';
     // `_desiredMusic` deliberately survives: it is what the screen wants, and
     // turning music back on has to know what to restart.
     _currentMusic = null;
     _musicToken++;
+    // Cleared before the player is touched: there is nothing left to restore
+    // the volume of, and a pending duck timer would otherwise outlive the
+    // track it belonged to.
+    _unduck();
     final music = _music;
     try {
       if (music != null) unawaited(music.stop());
@@ -315,23 +470,43 @@ class AudioService {
     }
   }
 
+  /// Pulls the music down for [_duckWindow], and holds it there while sounds
+  /// keep arriving.
+  ///
+  /// One volume write per duck rather than one per sound. A three line clear
+  /// that collects a star fires six effects inside 210ms, and this used to
+  /// write the music volume six times and leave six timers behind, at the one
+  /// frame the game is already busiest with particles, shake and combo text.
+  /// Now the first sound ducks and each later one only pushes the timer back.
   void _duck() {
-    _duckUntil = DateTime.now().add(const Duration(milliseconds: 260));
     final music = _music;
     if (music == null || _currentMusic == null) return;
-    unawaited(_setMusicVolume(music, _duckedVolume * _musicVolume));
-    Future<void>.delayed(const Duration(milliseconds: 280), () {
-      if (DateTime.now().isAfter(_duckUntil)) {
-        unawaited(_setMusicVolume(music, _musicVolume));
-      }
-    });
+    if (!_ducked) {
+      _ducked = true;
+      unawaited(_setMusicVolume(music, _duckedVolume * _musicVolume));
+    }
+    _duckTimer?.cancel();
+    _duckTimer = Timer(_duckWindow, _unduck);
+  }
+
+  void _unduck() {
+    _duckTimer?.cancel();
+    _duckTimer = null;
+    if (!_ducked) return;
+    _ducked = false;
+    final music = _music;
+    if (music == null || _currentMusic == null) return;
+    unawaited(_setMusicVolume(music, _musicVolume));
   }
 
   Future<void> disposeAll() async {
-    for (final p in _pool) {
-      await p.dispose();
+    _unduck();
+    for (final pending in _players.values) {
+      await (await pending)?.dispose();
     }
-    _pool.clear();
+    _players.clear();
+    _volumes.clear();
+    _hasBackend = false;
     await _music?.dispose();
     _music = null;
     _ready = false;

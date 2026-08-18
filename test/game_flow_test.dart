@@ -1,4 +1,5 @@
 import 'package:blocktopus/app/theme.dart';
+import 'package:blocktopus/game/audio.dart';
 import 'package:blocktopus/game/board_state.dart';
 import 'package:blocktopus/game/game_controller.dart';
 import 'package:blocktopus/game/level_loader.dart';
@@ -790,6 +791,31 @@ void main() {
       expect(find.text('Paused'), findsNothing);
     });
 
+    testWidgets('opening settings from pause lets the music be heard', (
+      tester,
+    ) async {
+      // Pausing pauses the music, and settings is where the music volume is
+      // set. Opening it from the pause menu therefore handed the player a
+      // volume slider and a music toggle acting on a paused track: both
+      // worked, neither could be heard, and both were reported as broken.
+      await pumpLevelOne(tester);
+      await tester.tap(find.byIcon(Icons.pause_rounded));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(AudioService.instance.musicIntent, 'pause');
+
+      await tester.tap(find.text('Settings'));
+      await tester.pumpAndSettle();
+
+      // Either way of asking counts. `resumeMusic` picks the track up where
+      // it was, and falls back to starting it when there is nothing to
+      // resume; what matters is that the screen asked at all.
+      expect(
+        AudioService.instance.musicIntent,
+        anyOf('resume', 'play'),
+        reason:
+            'the music has to be audible for its own slider to mean anything',
+      );
+    });
     testWidgets('the veil swallows a drag that would otherwise place', (
       tester,
     ) async {

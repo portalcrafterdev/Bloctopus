@@ -540,6 +540,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _settingsFromPause() async {
+    // The music is paused while the board is. But settings is where the music
+    // volume is set, and a slider that changes nothing you can hear is a
+    // slider that looks broken - which is exactly how it was reported. So the
+    // track plays for as long as that screen is open.
+    AudioService.instance.resumeMusic();
     await _openSettings();
     // Settings can turn music off and back on, which starts the track playing
     // again. Coming back to a paused board that is humming along would undo

@@ -70,6 +70,8 @@ void main() {
     }
   });
 
+  _preloadCoverage();
+
   test('the files are real PCM wav, not empty placeholders', () {
     for (final key in <String>[Sfx.place, Sfx.clear(1), Music.game]) {
       final bytes = file(key).readAsBytesSync();
@@ -79,5 +81,46 @@ void main() {
       expect(bytes[22], 1, reason: '$key is not mono');
       expect(bytes[34], 16, reason: '$key is not 16 bit');
     }
+  });
+}
+
+/// Every effect is preloaded at startup, one player per sound, so that playing
+/// it costs a rewind and a native trigger rather than resolving and preparing
+/// the asset again. The cost of that design is that a sound missing from the
+/// preload list has no player at all and is skipped in silence, with nothing
+/// throwing and no failure recorded. These two tests are what stop a new sound
+/// being added and never heard.
+void _preloadCoverage() {
+  final dir = Directory('assets/audio');
+
+  test('every preloaded key has a file behind it', () {
+    for (final key in AudioService.preloadedKeys) {
+      expect(
+        File('${dir.path}/$key.wav').existsSync(),
+        isTrue,
+        reason: '$key is preloaded but has no file',
+      );
+    }
+  });
+
+  test('every shipped effect is preloaded', () {
+    // Music is deliberately excluded: it streams from its own looping player
+    // rather than being held in the effects pool.
+    final music = <String>{Music.menu, Music.game};
+    final onDisk = dir
+        .listSync()
+        .whereType<File>()
+        .map((f) => f.uri.pathSegments.last)
+        .where((n) => n.endsWith('.wav'))
+        .map((n) => n.substring(0, n.length - 4))
+        .where((n) => !music.contains(n))
+        .toSet();
+
+    expect(
+      onDisk.difference(AudioService.preloadedKeys.toSet()),
+      isEmpty,
+      reason:
+          'these sounds ship but are never warmed up, so the first play stalls',
+    );
   });
 }
