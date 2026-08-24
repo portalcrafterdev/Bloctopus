@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../ads/ad_service.dart';
 import '../app/theme.dart';
 import '../game/audio.dart';
+import '../games/games_service.dart';
 import '../models/save_data.dart';
 import '../widgets/mascot_view.dart';
 import 'home_screen.dart';
@@ -34,6 +35,10 @@ class _SplashScreenState extends State<SplashScreen> {
     // offline first run that can take far longer than the splash should ever
     // last. Nothing in the game waits on an ad, so nothing waits on this.
     unawaited(AdService.instance.init());
+    // Same reasoning and the same shape. Both platforms restore a previous
+    // session over the network, so a player who signed in yesterday is signed
+    // in again by the time the home screen is up, without being asked.
+    unawaited(GamesService.instance.init());
 
     // Never flash: hold the splash for at least 700ms.
     final elapsed = DateTime.now().difference(started);

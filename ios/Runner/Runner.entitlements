@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Game Center. This is the whole iOS side of the configuration: with
+	     it, a signed build on a device with an Apple ID can authenticate.
+
+	     It only takes effect once the Game Center capability is enabled for
+	     the App ID in the Apple Developer portal. Without that the entitlement
+	     does not match the provisioning profile and the build fails to sign,
+	     which is a loud failure rather than a silent one. -->
+	<key>com.apple.developer.game-center</key>
+	<true/>
+</dict>
+</plist>

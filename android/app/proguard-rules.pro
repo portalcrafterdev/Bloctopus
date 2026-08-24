@@ -40,3 +40,13 @@
 # through the webview plugin it depends on.
 -keep class io.flutter.plugins.webviewflutter.** { *; }
 -dontwarn io.flutter.plugins.webviewflutter.**
+
+# Play Games Services. The plugin hands the player object to Gson, which
+# reads and writes fields by reflection: with the model classes renamed, the
+# JSON that reaches Dart has obfuscated keys and PlayerData.fromJson returns
+# a player with no name. Gson's own consumer rules cover the library, not the
+# model classes that pass through it.
+-keep class com.abedalkareem.games_services.models.** { *; }
+-keepclassmembers class com.abedalkareem.games_services.models.** { <fields>; }
+-keep class com.google.android.gms.games.** { *; }
+-dontwarn com.google.android.gms.games.**

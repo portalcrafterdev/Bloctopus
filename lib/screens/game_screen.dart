@@ -10,6 +10,7 @@ import '../game/audio.dart';
 import '../game/board_state.dart';
 import '../game/game_controller.dart';
 import '../game/level_loader.dart';
+import '../games/games_service.dart';
 import '../models/level.dart';
 import '../models/save_data.dart';
 import '../widgets/blast_hammer.dart';
@@ -587,6 +588,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   Future<void> _showResult() async {
     final g = _game;
     if (!mounted || g == null) return;
+    // The controller has already folded this level's score into the running
+    // total, so this is the first moment the new total exists. Not awaited:
+    // it is a network call, it is silent either way, and nothing below it
+    // depends on the answer.
+    unawaited(GamesService.instance.submitTotalScore(widget.save.totalScore));
+
     final action = await showResultSheet(
       context,
       level: g.level,

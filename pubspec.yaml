@@ -20,6 +20,7 @@ dependencies:
   # ads by supplying live AdMob unit ids. Everything ad related lives under
   # lib/ads/ so the rest of the game stays offline and unaware of it.
   google_mobile_ads: ^9.1.0
+  games_services: ^5.3.0
 
 dev_dependencies:
   flutter_test:

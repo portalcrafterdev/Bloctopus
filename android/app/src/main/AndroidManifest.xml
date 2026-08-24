@@ -40,6 +40,21 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-8244651657160773~3302542021" />
+
+        <!-- Play Games Services. The id is a string resource, not a literal:
+             the SDK reads it as a string, and a bare twelve digit number in
+             android:value is parsed as an integer and overflows. See the
+             comment in res/values/strings.xml. -->
+        <meta-data
+            android:name="com.google.android.gms.games.APP_ID"
+            android:value="@string/game_services_project_id" />
+
+        <!-- The Play Services version the app was built against. The Games
+             SDK checks it against the version on the device before doing
+             anything, so it is required, not advisory. -->
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

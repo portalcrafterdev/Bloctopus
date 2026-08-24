@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The Play Games project id, from Play Console > Play Games Services >
+         Configuration. A twelve digit number.
+
+         It lives in a string resource rather than inline in the manifest
+         because the Play Games SDK reads it as a string: a bare number in
+         android:value is parsed as an integer, overflows, and the SDK reports
+         a missing app id.
+
+         Keep this in step with GamesIds.playGamesProjectId in
+         lib/games/games_ids.dart. A test asserts the two agree, because
+         nothing at runtime would tell you they had drifted: sign in would
+         just fail with a generic error.
+
+         The placeholder below is deliberately not a real id. Nothing calls
+         into the SDK while GamesIds.playGamesProjectId is null, so it is
+         inert until both are filled in together. -->
+    <string name="game_services_project_id" translatable="false">000000000000</string>
+</resources>

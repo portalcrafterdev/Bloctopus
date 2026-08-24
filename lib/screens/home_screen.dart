@@ -9,6 +9,7 @@ import '../models/save_data.dart';
 import '../widgets/banner_ad_view.dart';
 import '../widgets/block_field.dart';
 import '../widgets/chunky_button.dart';
+import '../widgets/game_sign_in_button.dart';
 import '../widgets/mascot_view.dart';
 import '../widgets/wordmark.dart';
 import 'game_screen.dart';
@@ -185,6 +186,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                       '$stars stars',
                                       style: T.dimOnBg,
                                     ),
+                                  const SizedBox(height: 18),
+                                  // Under the play keys, not above them. It is
+                                  // optional: nothing in the game needs an
+                                  // account, and a sign in prompt standing
+                                  // between a player and the play button is
+                                  // the first thing a one star review mentions.
+                                  const GameSignInButton(),
                                   const SizedBox(height: 20),
                                 ],
                               ),
