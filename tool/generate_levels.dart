@@ -396,6 +396,7 @@ final Map<int, ChapterParams> kChapterParams = <int, ChapterParams>{
 ChapterParams paramsFor(int chapter) {
   final known = kChapterParams[chapter];
   if (known != null) return known;
+  if (chapter > 15) return _paramsForDeep(chapter);
   final t = (chapter - 11) / 4.0; // 0..1 across Ink Depths I-V
   return ChapterParams(
     chapter: chapter,
@@ -424,6 +425,53 @@ ChapterParams paramsFor(int chapter) {
     // Deeper boards are fuller, so a star can hide behind more of them.
     starMin: 4,
     starMax: (7 + 3 * t).round(),
+  );
+}
+
+/// Chapters 16-20, which continue past where Ink Depths stopped.
+///
+/// A separate branch rather than letting the Ink Depths formula run past
+/// `t = 1`. Extrapolating it to chapter 20 asks for a maximum density of
+/// 0.545, and `evaluate` rejects any board over 0.45 outright - so the
+/// generator would have spent most of its budget building boards it then threw
+/// away, and the chapter would have crawled or failed outright.
+///
+/// Density is close to its ceiling by chapter 15 and cannot carry the
+/// escalation on its own, so most of it comes from the move budget and from
+/// the shape pool: twenty shapes down to fourteen. Not as narrow as chapter
+/// 8's six - that restriction is chapter 8's identity and its wall should stay
+/// its own - but narrow enough that the tray stops offering a way out.
+ChapterParams _paramsForDeep(int chapter) {
+  final u = (chapter - 16) / 4.0; // 0..1 across Hadal Reach to Still Water
+  return ChapterParams(
+    chapter: chapter,
+    goals: const <GoalType>[
+      GoalType.clearLines,
+      GoalType.reachScore,
+      GoalType.breakBlocks,
+      GoalType.clearJelly,
+      GoalType.survive,
+      GoalType.collectStars,
+    ],
+    densityMin: 0.24 + 0.04 * u,
+    // Held under the 0.45 cap in `evaluate`, with room to spare: a board
+    // generated right at the cap is one rounding error from being discarded.
+    densityMax: 0.42 + 0.02 * u,
+    parMin: (11 - 2 * u).round(),
+    parMax: (16 - 3 * u).round(),
+    enforceMoveLimit: true,
+    pool: kPoolFull,
+    restrictPoolTo: (20 - 6 * u).round(),
+    blockedMin: 3,
+    blockedMax: (9 + 3 * u).round(),
+    jellyMin: 3,
+    jellyMax: (9 + 2 * u).round(),
+    doubleJellyMin: 2,
+    doubleJellyMax: (7 + 2 * u).round(),
+    stoneMin: 2,
+    stoneMax: (7 + 2 * u).round(),
+    starMin: 5,
+    starMax: (10 + 2 * u).round(),
   );
 }
 

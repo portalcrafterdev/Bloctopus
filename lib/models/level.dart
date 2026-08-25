@@ -211,10 +211,20 @@ const List<ChapterInfo> kChapters = <ChapterInfo>[
   ChapterInfo(13, 'Ink Depths III', 'remix', null),
   ChapterInfo(14, 'Ink Depths IV', 'remix', null),
   ChapterInfo(15, 'Ink Depths V', 'remix', null),
+  // Chapters 16-20. Ink Depths closed the run section 6.3 planned, so these
+  // are named places again rather than a sixth to tenth numeral: five more
+  // Roman numerals on the map banner would read as filler even if the levels
+  // are not. They introduce no new element - every mechanic is already out by
+  // chapter 9 - so they carry no tutorial.
+  ChapterInfo(16, 'Hadal Reach', 'remix', null),
+  ChapterInfo(17, 'Black Smoker', 'remix', null),
+  ChapterInfo(18, 'Drowned Spire', 'remix', null),
+  ChapterInfo(19, 'Glass Forest', 'remix', null),
+  ChapterInfo(20, 'Still Water', 'remix', null),
 ];
 
-const int kLevelCount = 1500;
-const int kChapterCount = 15;
+const int kLevelCount = 2000;
+const int kChapterCount = 20;
 
 int chapterOf(int levelId) =>
     ((levelId - 1) ~/ 100 + 1).clamp(1, kChapterCount);

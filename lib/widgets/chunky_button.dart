@@ -11,22 +11,41 @@ import '../game/audio.dart';
 /// three dimensional but feels dead.
 class ChunkyButton extends StatefulWidget {
   final String label;
-  final IconData icon;
+  final IconData? icon;
+
+  /// Drawn in place of [icon] when given, for a mark that is not a glyph.
+  final Widget? leading;
+
+  /// Drawn after the label. Sized by the caller, so it stays out of the way
+  /// of the label's own layout.
+  final Widget? trailing;
 
   /// The mid tone. The lit face and the lip are derived from it, so a caller
   /// picks one colour and cannot get the three out of step.
   final Color color;
   final double height;
+  final double fontSize;
+
+  /// The label colour. Also decides whether the label is outlined: see the
+  /// note on `edge` in `build`.
+  final Color labelColor;
   final VoidCallback onTap;
 
   const ChunkyButton({
     super.key,
     required this.label,
-    required this.icon,
+    this.icon,
+    this.leading,
+    this.trailing,
     required this.color,
     required this.onTap,
     this.height = 62,
-  });
+    this.fontSize = 18,
+    this.labelColor = textPrimary,
+  }) : assert(
+         icon != null || leading != null,
+         'a chunky button needs something to the left of its label',
+       );
 
   @override
   State<ChunkyButton> createState() => _ChunkyButtonState();
@@ -52,20 +71,26 @@ class _ChunkyButtonState extends State<ChunkyButton> {
     // plain white sits at barely 1.6:1 against its own background. Four hard
     // offsets in a dark shade of the button's own colour read as an outline
     // and cost nothing, which is how this shape is drawn everywhere it works.
+    //
+    // A dark label has the opposite problem and needs no help, so the outline
+    // is read off the label rather than passed in: it cannot be set wrong.
+    final outlined = widget.labelColor.computeLuminance() > 0.5;
     final edge = shift(-0.34);
     final labelStyle = T.label.copyWith(
-      fontSize: 18,
+      fontSize: widget.fontSize,
       fontWeight: FontWeight.w600,
-      color: textPrimary,
-      shadows: <Shadow>[
-        for (final o in const <Offset>[
-          Offset(-1.4, 0),
-          Offset(1.4, 0),
-          Offset(0, -1.4),
-          Offset(0, 1.6),
-        ])
-          Shadow(color: edge, offset: o),
-      ],
+      color: widget.labelColor,
+      shadows: outlined
+          ? <Shadow>[
+              for (final o in const <Offset>[
+                Offset(-1.4, 0),
+                Offset(1.4, 0),
+                Offset(0, -1.4),
+                Offset(0, 1.6),
+              ])
+                Shadow(color: edge, offset: o),
+            ]
+          : null,
     );
 
     return GestureDetector(
@@ -114,12 +139,13 @@ class _ChunkyButtonState extends State<ChunkyButton> {
                   children: [
                     // Same edge as the label: a white glyph on the gold face
                     // has the same problem the white copy does.
-                    Icon(
-                      widget.icon,
-                      size: 24,
-                      color: textPrimary,
-                      shadows: labelStyle.shadows,
-                    ),
+                    widget.leading ??
+                        Icon(
+                          widget.icon,
+                          size: 24,
+                          color: widget.labelColor,
+                          shadows: labelStyle.shadows,
+                        ),
                     const SizedBox(width: 12),
                     // Flexible, not bare: the row sizes to its content, so a
                     // label at a large system font would otherwise carry the
@@ -131,6 +157,10 @@ class _ChunkyButtonState extends State<ChunkyButton> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    if (widget.trailing != null) ...[
+                      const SizedBox(width: 10),
+                      widget.trailing!,
+                    ],
                   ],
                 ),
               ),

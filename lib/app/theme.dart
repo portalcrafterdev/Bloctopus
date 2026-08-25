@@ -186,6 +186,16 @@ List<Color> chapterGradient(int chapter) {
     [Color(0xFF7738B4), Color(0xFF582490)], // 13 Ink Depths III
     [Color(0xFF7A34B4), Color(0xFF5C2090)], // 14 Ink Depths IV
     [Color(0xFF7E30B4), Color(0xFF5F1C90)], // 15 Ink Depths V
+    // 16-20. The descent continues, but the hue turns back from magenta
+    // towards blue: Ink Depths was the darkest violet the palette has, and
+    // pushing further along the same line only muddies it. Cooling instead
+    // reads as deeper water while keeping every block colour legible, which
+    // is the constraint the whole table exists to satisfy.
+    [Color(0xFF6E30B0), Color(0xFF501C8C)], // 16 Hadal Reach
+    [Color(0xFF5F32AC), Color(0xFF431E88)], // 17 Black Smoker
+    [Color(0xFF5134A8), Color(0xFF382084)], // 18 Drowned Spire
+    [Color(0xFF4536A4), Color(0xFF2E2280)], // 19 Glass Forest
+    [Color(0xFF3A38A0), Color(0xFF26247C)], // 20 Still Water
   ];
   return stops[(chapter - 1).clamp(0, stops.length - 1)];
 }

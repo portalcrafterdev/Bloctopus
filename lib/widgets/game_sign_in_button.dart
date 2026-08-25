@@ -5,9 +5,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
-import '../game/audio.dart';
 import '../games/games_ids.dart';
 import '../games/games_service.dart';
+import 'chunky_button.dart';
 
 /// The sign in pill on the home screen.
 ///
@@ -15,10 +15,15 @@ import '../games/games_service.dart';
 /// are and opens the leaderboard. There is no third state and no sign out,
 /// because neither platform offers one - see [GamesService].
 ///
-/// It is white on purpose. Every other control on this screen is a coloured
-/// chunky key, and this one is not ours: it belongs to Google or to Apple,
-/// the player recognises it by its shape, and dressing it in the game's
-/// palette would only make it look like another game button.
+/// It is a [ChunkyButton] like the two above it, so it belongs to the screen
+/// rather than sitting on top of it. A flat pill was the correct shape by
+/// Google's button spec and the wrong one here: next to two keys with a lit
+/// face and a lip it read as a piece of another app.
+///
+/// What keeps it subordinate to Play and Levels is size and colour, not a
+/// different construction: a shorter key with a smaller label, in an almost
+/// white that carries a trace of the background's violet so the lip has
+/// somewhere to go.
 class GameSignInButton extends StatefulWidget {
   const GameSignInButton({super.key});
 
@@ -29,11 +34,23 @@ class GameSignInButton extends StatefulWidget {
 class _GameSignInButtonState extends State<GameSignInButton> {
   bool _busy = false;
 
+  /// Plain white, and it has to stay plain.
+  ///
+  /// ChunkyButton derives the lip by dropping this colour's HSL lightness,
+  /// which keeps its saturation - and a near white with the faintest tint is
+  /// a *highly* saturated colour in HSL terms. An off white that looked white
+  /// gave a lip of obvious lilac under a face that read as white, so the two
+  /// halves of one key looked like they came from different buttons. At zero
+  /// saturation there is no hue left to survive the shift, and the lip comes
+  /// out the neutral grey the face wants.
+  static const Color _face = Color(0xFFFFFFFF);
+
   static bool get _isIOS => !kIsWeb && Platform.isIOS;
 
   Future<void> _tap() async {
     if (_busy) return;
-    AudioService.instance.play(Sfx.tap, volume: 0.6);
+    // No tap sound here: ChunkyButton plays it, and doubling it up on one
+    // press is audible as a flam.
     final games = GamesService.instance;
 
     if (games.signedIn) {
@@ -73,48 +90,27 @@ class _GameSignInButtonState extends State<GameSignInButton> {
           label: player == null
               ? 'Sign in with ${GamesIds.serviceName}'
               : 'Signed in as ${player.name}',
-          child: GestureDetector(
+          child: ChunkyButton(
+            label: player?.name ?? 'Sign in with ${GamesIds.serviceName}',
+            leading: _leading(player),
+            // Only once there is somewhere for it to go. Signed in with no
+            // leaderboard yet, the button still says who you are, and an icon
+            // promising a screen that does not open would be a lie.
+            trailing: player != null && GamesIds.leaderboardAvailable
+                ? const Icon(
+                    Icons.leaderboard_rounded,
+                    size: 18,
+                    color: Color(0xFF5F6368),
+                  )
+                : null,
+            color: _face,
+            // Google's own button spec, and it reads correctly under
+            // Apple's too. ChunkyButton drops the label outline for a dark
+            // colour on its own.
+            labelColor: const Color(0xFF1F1F1F),
+            height: 48,
+            fontSize: 15,
             onTap: _tap,
-            child: Container(
-              height: 44,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: const Color(0xFF747775)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _leading(player),
-                  const SizedBox(width: 10),
-                  // Flexible so a long Play Games display name, or a large
-                  // system font, ellipsises instead of overflowing the pill.
-                  Flexible(
-                    child: Text(
-                      player?.name ?? 'Sign in with ${GamesIds.serviceName}',
-                      overflow: TextOverflow.ellipsis,
-                      style: T.label.copyWith(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        // Google's own button spec, and it reads correctly
-                        // under Apple's too.
-                        color: const Color(0xFF1F1F1F),
-                        letterSpacing: 0.1,
-                      ),
-                    ),
-                  ),
-                  if (player != null && GamesIds.leaderboardAvailable) ...[
-                    const SizedBox(width: 8),
-                    const Icon(
-                      Icons.leaderboard_rounded,
-                      size: 18,
-                      color: Color(0xFF5F6368),
-                    ),
-                  ],
-                ],
-              ),
-            ),
           ),
         );
       },

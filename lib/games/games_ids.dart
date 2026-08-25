@@ -57,8 +57,11 @@ class GamesIds {
   static String get androidLeaderboard => androidLeaderboardId ?? '';
   static String get iosLeaderboard => iosLeaderboardId ?? '';
 
-  /// What the sign in button calls the service it is signing into. They are
-  /// different products with different account systems, and a button that
-  /// said "Google" on an iPhone would be promising something it cannot do.
-  static String get serviceName => _isIOS ? 'Game Center' : 'Google';
+  /// What the sign in button calls the service it is signing into.
+  ///
+  /// Named for the product, not the account behind it. "Google" would be true
+  /// on Android - Play Games authenticates with a Google account - but it
+  /// promises a general Google sign in the game does not do, and it means
+  /// nothing on an iPhone, where the account is an Apple one.
+  static String get serviceName => _isIOS ? 'Game Center' : 'Play Games';
 }

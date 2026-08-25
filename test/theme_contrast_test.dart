@@ -1,4 +1,5 @@
 ﻿import 'package:blocktopus/app/theme.dart';
+import 'package:blocktopus/models/level.dart' show kChapterCount;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -70,8 +71,12 @@ void main() {
 
     test('on-light text against every chapter gradient', () {
       // The score header and the map banner sit on the gradient, not on the
-      // flat `bg`, and the gradient is different in all fifteen chapters.
-      for (var chapter = 1; chapter <= 15; chapter++) {
+      // flat `bg`, and the gradient is different in every chapter.
+      //
+      // Counted off `kChapterCount` rather than written out: this was a
+      // literal 15, so adding chapters 16-20 left five new gradients
+      // completely unchecked, and they are the darkest in the table.
+      for (var chapter = 1; chapter <= kChapterCount; chapter++) {
         for (final stop in chapterGradient(chapter)) {
           expect(
             contrast(textOnBg, stop),

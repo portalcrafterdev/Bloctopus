@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
@@ -30,10 +32,35 @@ class _BannerAdViewState extends State<BannerAdView> {
   /// away rather than attached to a dead element.
   bool _disposed = false;
 
+  /// Failed attempts since the last success.
+  ///
+  /// A banner request fails for reasons that pass: a moment of bad DNS, a
+  /// handover between wifi and mobile, a device that filters ad domains, a
+  /// genuine no fill. Without a retry the first of those costs the whole
+  /// screen its ad for as long as the player stays on it, which is the rest
+  /// of the session for the home screen. Bounded, so a device that will never
+  /// serve an ad is asked three times and then left alone rather than being
+  /// polled flat.
+  int _attempts = 0;
+  static const int _maxAttempts = 3;
+  Timer? _retry;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_ad == null) _load();
+  }
+
+  void _scheduleRetry() {
+    if (_disposed || _attempts >= _maxAttempts) return;
+    _attempts++;
+    _retry?.cancel();
+    // Backs off: 2s, then 4s, then 6s. Long enough that a blip has passed,
+    // short enough that the ad is there before the player has read the menu.
+    _retry = Timer(Duration(seconds: 2 * _attempts), () {
+      if (_disposed || !mounted || _ad != null) return;
+      _load();
+    });
   }
 
   Future<void> _load() async {
@@ -55,17 +82,19 @@ class _BannerAdViewState extends State<BannerAdView> {
       listener: BannerAdListener(
         onAdLoaded: (_) {
           if (_disposed) return;
+          _attempts = 0;
           setState(() => _loaded = true);
         },
         onAdFailedToLoad: (ad, error) {
           ad.dispose();
           if (_disposed) return;
-          // Left unloaded on purpose. No retry loop: a device with no fill
-          // would spin one forever, and the reserved space simply stays empty.
           setState(() {
             _ad = null;
             _loaded = false;
           });
+          // The reserved space stays empty in the meantime, so a retry that
+          // lands late costs nothing and moves nothing.
+          _scheduleRetry();
         },
       ),
     );
@@ -80,6 +109,7 @@ class _BannerAdViewState extends State<BannerAdView> {
   @override
   void dispose() {
     _disposed = true;
+    _retry?.cancel();
     _ad?.dispose();
     super.dispose();
   }

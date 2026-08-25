@@ -57,8 +57,17 @@ void main() {
       test('every level is well formed', () {
         for (final l in levels) {
           expect(l.preset.length, kCellCount, reason: 'level ${l.id}');
+          // Counted off the constants, not a literal range.
+          //
+          // This was `c <= 5`, matching the five kinds section 6.2 lists. The
+          // star cell was added afterwards as kind 6 and nothing here moved,
+          // so this assertion had been failing on chapters 1 and 2 - which
+          // ship stars - since the day stars landed. Nobody saw it because
+          // the whole file is tagged `slow` and every ordinary run excludes
+          // it. A range written as a literal cannot follow the enum it is
+          // describing; one written off the enum can.
           expect(
-            l.preset.every((c) => c >= 0 && c <= 5),
+            l.preset.every((c) => c >= Cell.empty && c <= Cell.star),
             isTrue,
             reason: 'level ${l.id} has an unknown cell kind',
           );
