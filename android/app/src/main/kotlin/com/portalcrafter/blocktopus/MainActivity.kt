@@ -1,4 +1,4 @@
-package com.bloctopus.game
+package com.portalcrafter.blocktopus
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -167,9 +167,11 @@ stops an unsolvable level shipping.
 
 ## Before the first release
 
-- The bundle id is `com.bloctopus.game`, set by the owner. Note the spelling:
-  the app is Blocktopus, the id is bloctopus. Confirm this is intended before
-  the first publish, because it can never be changed afterwards.
+- The bundle id is `com.portalcrafter.blocktopus`, set by the owner. It can
+  never be changed after the first publish: both stores treat a different id
+  as a different app, so a correction later means a new listing from zero.
+  It is also what the AdMob app, the Play Games Services project and the Game
+  Center App ID are each bound to, alongside the release signing certificate.
 - Replace the generated placeholder audio with commissioned sound. See
   `assets/audio/README.md`.
 - Confirm the name is free on Google Play, the App Store and as a domain.

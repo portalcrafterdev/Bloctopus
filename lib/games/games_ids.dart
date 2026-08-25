@@ -34,7 +34,7 @@ class GamesIds {
 
   /// Leaderboard ids. Android's is issued by the Play Console and looks like
   /// `CgkI1a2b3c4dEAIQAQ`; iOS's is chosen by you in App Store Connect, and
-  /// a reverse-DNS string such as `com.bloctopus.game.total_score` is the
+  /// a reverse-DNS string such as `com.portalcrafter.blocktopus.total_score` is the
   /// convention.
   ///
   /// Both are null until the leaderboards are created. Sign in does not need

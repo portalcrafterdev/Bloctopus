@@ -10,7 +10,7 @@ marks, matching the mascot's voice: plain, warm, short.
 - App name: **Blocktopus**
 - Store title: **Blocktopus: Block Puzzle**
   (30 characters on Play. "Blocktopus: Block Puzzle" is 24.)
-- Application id / bundle id: `com.bloctopus.game`
+- Application id / bundle id: `com.portalcrafter.blocktopus`
 - Developer name: _to be confirmed_
 
 ## Short description (Play, 80 characters max)

@@ -21,7 +21,7 @@ if (hasReleaseKeystore) {
 android {
     // Set by the owner. This can never be changed once the app is published:
     // Google Play treats a different application id as a different app.
-    namespace = "com.bloctopus.game"
+    namespace = "com.portalcrafter.blocktopus"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -31,7 +31,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.bloctopus.game"
+        applicationId = "com.portalcrafter.blocktopus"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

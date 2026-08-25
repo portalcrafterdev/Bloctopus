@@ -159,13 +159,22 @@ class _GameSignInButtonState extends State<GameSignInButton> {
           color: Color(0xFF1F1F1F),
         )
       : const SizedBox(
-          width: 18,
-          height: 18,
+          // A shade larger than the 18 the glyphs use. The mark carries an
+          // opening that has to survive at this size, and below 20 it starts
+          // to close up and read as a nought.
+          width: 20,
+          height: 20,
           child: CustomPaint(painter: _GoogleMarkPainter()),
         );
 }
 
-/// The Google mark, drawn as four arcs of one ring plus the bar.
+/// The Google mark: an open ring in four colours, with the bar coming in from
+/// the right.
+///
+/// The ring is deliberately **not** closed. The sweeps below total 300
+/// degrees, not 360, and the missing 60 - from one o'clock round to three -
+/// is the whole difference between a G and an O. A closed ring reads as a
+/// nought at button size no matter how the colours are arranged.
 ///
 /// Painted rather than shipped so there is no image asset and no licence
 /// question in the repo. It is an approximation of a trademark: before
@@ -179,14 +188,16 @@ class _GoogleMarkPainter extends CustomPainter {
   static const Color _yellow = Color(0xFFFBBC05);
   static const Color _red = Color(0xFFEA4335);
 
-  /// Start angle and sweep per segment, clockwise from three o'clock. The
-  /// four sweeps total a full turn, so the ring closes.
+  /// Colour, start angle and sweep, in degrees clockwise from three o'clock.
+  ///
+  /// Blue starts at three o'clock, where the bar meets it, and the run ends
+  /// with red at one o'clock, leaving the opening.
   static const List<(Color, double, double)> _segments =
       <(Color, double, double)>[
-        (_blue, -60, 60),
-        (_green, 0, 120),
-        (_yellow, 120, 90),
-        (_red, 210, 90),
+        (_blue, 0, 45),
+        (_green, 45, 75),
+        (_yellow, 120, 75),
+        (_red, 195, 105),
       ];
 
   @override
@@ -195,7 +206,7 @@ class _GoogleMarkPainter extends CustomPainter {
     final centre = Offset(size.width / 2, size.height / 2);
     // The ring is stroked, so its radius is the middle of the band and the
     // outer edge lands half a stroke beyond it.
-    final stroke = d * 0.22;
+    final stroke = d * 0.23;
     final radius = (d - stroke) / 2;
     final rect = Rect.fromCircle(center: centre, radius: radius);
 
@@ -213,15 +224,16 @@ class _GoogleMarkPainter extends CustomPainter {
       );
     }
 
-    // The bar, from the centre out to the ring's outer edge, sitting just
-    // below the middle as it does in the mark.
-    final top = centre.dy - stroke * 0.4;
+    // The bar, from the middle of the mark out to the ring's outer edge. Its
+    // top edge is the top edge of the blue arc where that arc begins, so the
+    // two read as one continuous stroke turning the corner rather than as a
+    // bar stuck onto a ring.
     canvas.drawRect(
       Rect.fromLTRB(
         centre.dx,
-        top,
+        centre.dy - stroke / 2,
         centre.dx + radius + stroke / 2,
-        top + stroke,
+        centre.dy + stroke / 2,
       ),
       Paint()..color = _blue,
     );
