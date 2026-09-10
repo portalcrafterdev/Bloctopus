@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:games_services/games_services.dart';
 
+import 'achievements.dart';
 import 'games_ids.dart';
 
 /// The signed in player, in terms this app owns.
@@ -60,10 +61,10 @@ class GamesService {
 
   bool get signingIn => _signingIn;
 
-  /// The last total submitted, so finishing a level that scored nothing new
-  /// does not spend a network call. -1 rather than 0 so a first submission of
-  /// zero still goes.
-  int _lastSubmitted = -1;
+  /// The last value submitted per board, so finishing a level that moved none
+  /// of them does not spend three network calls. Absent rather than zero, so
+  /// a genuine first submission of zero still goes.
+  final Map<GameLeaderboard, int> _lastSubmitted = <GameLeaderboard, int>{};
 
   @visibleForTesting
   bool debugDisabled = false;
@@ -112,40 +113,147 @@ class GamesService {
     }
   }
 
-  /// Submits the running total to the leaderboard.
+  /// Submits the player's progress to every leaderboard that exists.
   ///
   /// Called on level completion. Silent by design: a player who is not signed
   /// in has not opted into any of this, and telling them what they are
   /// missing every time they finish a level would be nagging.
-  Future<void> submitTotalScore(int score) async {
-    if (debugDisabled || !signedIn || !GamesIds.leaderboardAvailable) return;
-    if (score <= _lastSubmitted) return;
-    _lastSubmitted = score;
+  ///
+  /// The three boards move at different rates - score changes on every clear,
+  /// levels completed only on a first clear, stars only on an improvement -
+  /// so each is deduped separately and an unchanged one costs nothing. They
+  /// go together rather than in sequence because a slow one must not hold up
+  /// the others, and nothing is waiting on the result.
+  Future<void> submitProgress({
+    required int totalScore,
+    required int levelsCompleted,
+    required int starsEarned,
+  }) async {
+    await Future.wait(<Future<void>>[
+      _submit(GameLeaderboard.totalScore, totalScore),
+      _submit(GameLeaderboard.levelsCompleted, levelsCompleted),
+      _submit(GameLeaderboard.starsEarned, starsEarned),
+    ]);
+  }
+
+  Future<void> _submit(GameLeaderboard board, int value) async {
+    if (debugDisabled || !signedIn || !board.available) return;
+    final last = _lastSubmitted[board];
+    if (last != null && value <= last) return;
+    _lastSubmitted[board] = value;
     try {
       await Leaderboards.submitScore(
         score: Score(
-          androidLeaderboardID: GamesIds.androidLeaderboard,
-          iOSLeaderboardID: GamesIds.iosLeaderboard,
-          value: score,
+          androidLeaderboardID: board.androidId,
+          iOSLeaderboardID: board.iosId,
+          value: value,
         ),
       );
     } catch (_) {
-      // Let the next completed level try again rather than stranding the
-      // total one level behind for the rest of the session.
-      _lastSubmitted = -1;
+      // Let the next completed level try again rather than stranding this one
+      // board a level behind for the rest of the session.
+      _lastSubmitted.remove(board);
+    }
+  }
+
+  /// Achievements already unlocked this session, so a trigger that fires on
+  /// every level completion - and most of them do, because they are threshold
+  /// tests against a running total - only ever costs one network call.
+  ///
+  /// Session scoped rather than saved: the platform is the real record of
+  /// what is unlocked, and re-unlocking something is harmless.
+  final Set<GameAchievement> _unlocked = <GameAchievement>{};
+
+  /// The last step count reported per incremental achievement, so a level
+  /// that moved none of them costs nothing.
+  final Map<GameAchievement, int> _lastSteps = <GameAchievement, int>{};
+
+  /// Reports everything the save has earned.
+  ///
+  /// Called on level completion beside [submitProgress]. The rules live in
+  /// `achievements.dart`; this only carries the answer to the platform, and
+  /// splits it the way the two Play APIs need: standard achievements unlock,
+  /// incremental ones set an absolute step count.
+  Future<void> report(AchievementProgress progress) async {
+    if (progress.isEmpty) return;
+    await Future.wait(<Future<void>>[
+      ...progress.unlock.map(unlock),
+      ...progress.steps.entries.map((e) => _setSteps(e.key, e.value)),
+    ]);
+  }
+
+  Future<void> _setSteps(GameAchievement achievement, int value) async {
+    if (debugDisabled || !signedIn || !achievement.available) return;
+    if (!achievement.isIncremental || value <= 0) return;
+    final last = _lastSteps[achievement];
+    if (last != null && value <= last) return;
+    _lastSteps[achievement] = value;
+    try {
+      // Absolute, not a delta: setSteps never reduces existing progress, so
+      // re-sending the same total is safe and a missed report catches up on
+      // its own next time. increment() would double count instead.
+      await Achievements.setSteps(
+        achievement: Achievement(
+          androidID: achievement.androidId,
+          iOSID: achievement.iosId,
+          steps: value,
+        ),
+      );
+    } catch (_) {
+      // Android only. On iOS this throws every time, which is why the guard
+      // above is availability rather than platform: iOS ids are null, so
+      // nothing reaches here at all.
+      _lastSteps.remove(achievement);
+    }
+  }
+
+  /// Unlocks a standard achievement, at most once per session.
+  ///
+  /// Silent like everything else here. Unlocking one the console has never
+  /// heard of also succeeds and does nothing, so a wrong id cannot be caught
+  /// at runtime - only by the test that checks the ids against the console's
+  /// own export.
+  Future<void> unlock(GameAchievement achievement) async {
+    if (debugDisabled || !signedIn || !achievement.available) return;
+    if (!_unlocked.add(achievement)) return;
+    try {
+      await Achievements.unlock(
+        achievement: Achievement(
+          androidID: achievement.androidId,
+          iOSID: achievement.iosId,
+          percentComplete: 100,
+        ),
+      );
+    } catch (_) {
+      // Let a later level try again rather than losing it for the session.
+      _unlocked.remove(achievement);
+    }
+  }
+
+  /// Opens the platform's achievements screen. Returns whether it opened.
+  Future<bool> showAchievements() async {
+    if (debugDisabled || !signedIn || !GamesIds.achievementsAvailable) {
+      return false;
+    }
+    try {
+      await Achievements.showAchievements();
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 
   /// Opens the platform's leaderboard screen. Returns whether it opened.
+  ///
+  /// Deliberately passes no id, which both platforms read as "show the list".
+  /// There are three boards and no way to know which one the player came to
+  /// look at, so picking one for them would be guessing.
   Future<bool> showLeaderboard() async {
     if (debugDisabled || !signedIn || !GamesIds.leaderboardAvailable) {
       return false;
     }
     try {
-      await Leaderboards.showLeaderboards(
-        androidLeaderboardID: GamesIds.androidLeaderboard,
-        iOSLeaderboardID: GamesIds.iosLeaderboard,
-      );
+      await Leaderboards.showLeaderboards();
       return true;
     } catch (_) {
       return false;
@@ -158,7 +266,9 @@ class GamesService {
     _sub = null;
     _started = false;
     _signingIn = false;
-    _lastSubmitted = -1;
+    _lastSubmitted.clear();
+    _unlocked.clear();
+    _lastSteps.clear();
     player.value = null;
   }
 }

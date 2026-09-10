@@ -94,6 +94,13 @@ class SaveData extends ChangeNotifier {
   int totalScore;
   int levelsCompleted;
 
+  /// Levels beaten on their first completion without spending a booster.
+  ///
+  /// Counted on first completion only, so a level cannot be replayed to farm
+  /// it, which matches the achievement's wording of "25 levels" rather than
+  /// 25 wins. Absent from older saves and read as zero, so no version bump.
+  int unaidedCompletions;
+
   SaveData({
     this.version = kSaveVersion,
     this.currentLevel = 1,
@@ -102,6 +109,7 @@ class SaveData extends ChangeNotifier {
     GameSettings? settings,
     this.totalScore = 0,
     this.levelsCompleted = 0,
+    this.unaidedCompletions = 0,
   }) : stars = stars ?? <int, int>{},
        boosters =
            boosters ??
@@ -153,6 +161,7 @@ class SaveData extends ChangeNotifier {
       ),
       totalScore: j['totalScore'] as int? ?? 0,
       levelsCompleted: j['levelsCompleted'] as int? ?? 0,
+      unaidedCompletions: j['unaidedCompletions'] as int? ?? 0,
     );
   }
 
@@ -166,6 +175,7 @@ class SaveData extends ChangeNotifier {
     'settings': settings.toJson(),
     'totalScore': totalScore,
     'levelsCompleted': levelsCompleted,
+    'unaidedCompletions': unaidedCompletions,
   };
 
   Future<void> save() async {
@@ -176,6 +186,23 @@ class SaveData extends ChangeNotifier {
   // -- progression ----------------------------------------------------------
 
   int starsFor(int levelId) => stars[levelId] ?? 0;
+
+  /// Stars earned across every level. Shown on the home, map and settings
+  /// screens, and submitted to the stars leaderboard.
+  int get totalStars => stars.values.fold<int>(0, (a, b) => a + b);
+
+  /// Levels beaten at three stars. Feeds the Perfectionist and Flawless
+  /// Depths achievements.
+  int get threeStarCount => stars.values.where((s) => s == 3).length;
+
+  /// Whether every level in [chapter] has been completed.
+  bool isChapterComplete(int chapter) {
+    final first = (chapter - 1) * 100 + 1;
+    for (var id = first; id < first + 100 && id <= kLevelCount; id++) {
+      if (!isCompleted(id)) return false;
+    }
+    return true;
+  }
 
   /// Linear unlock. Level N+1 unlocks when N is completed. No star gates.
   bool isUnlocked(int levelId) => levelId <= currentLevel;
@@ -222,12 +249,24 @@ class SaveData extends ChangeNotifier {
   }
 
   /// Records a finished level and returns the booster awarded, if any.
-  String? recordResult(int levelId, int stars, int score) {
+  ///
+  /// [unaided] means no booster was spent on this attempt. It only counts on
+  /// a first completion, alongside [levelsCompleted], so replaying a level
+  /// cannot inflate it.
+  String? recordResult(
+    int levelId,
+    int stars,
+    int score, {
+    bool unaided = false,
+  }) {
     final previous = starsFor(levelId);
     if (stars > previous) this.stars[levelId] = stars;
     if (stars > 0) {
       totalScore += score;
-      if (previous == 0) levelsCompleted++;
+      if (previous == 0) {
+        levelsCompleted++;
+        if (unaided) unaidedCompletions++;
+      }
       if (levelId + 1 > currentLevel && levelId < kLevelCount) {
         currentLevel = levelId + 1;
       }

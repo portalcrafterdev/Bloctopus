@@ -13,8 +13,10 @@
          nothing at runtime would tell you they had drifted: sign in would
          just fail with a generic error.
 
-         The placeholder below is deliberately not a real id. Nothing calls
-         into the SDK while GamesIds.playGamesProjectId is null, so it is
-         inert until both are filled in together. -->
-    <string name="game_services_project_id" translatable="false">000000000000</string>
+         This is the real id for the "blocktopus" Play Games Services
+         project. Sign in additionally requires the SHA-1 of the certificate
+         that signed the build to be registered against that project, so a
+         build signed with different keys fails here with a generic error
+         even though this value is correct. -->
+    <string name="game_services_project_id" translatable="false">180890621658</string>
 </resources>

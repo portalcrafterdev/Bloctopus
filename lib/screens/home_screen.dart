@@ -101,7 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final save = widget.save;
     final started = save.levelsCompleted > 0;
-    final stars = save.stars.values.fold<int>(0, (a, b) => a + b);
+    final stars = save.totalStars;
 
     return Scaffold(
       backgroundColor: bg,

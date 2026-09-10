@@ -89,6 +89,205 @@ void main() {
     });
   });
 
+  group('the leaderboards', () {
+    test('every board has an id for at least one platform', () {
+      // A board with neither id is dead weight: it can never be submitted to
+      // and never appears, so it is a listing in the Play Console that the
+      // game silently ignores.
+      for (final board in GameLeaderboard.values) {
+        expect(
+          board.android ?? board.ios,
+          isNotNull,
+          reason: '${board.name} has no id on either platform',
+        );
+      }
+    });
+
+    test('no two boards share an id', () {
+      // Copy and paste is the obvious way to get this wrong, and the symptom
+      // is not an error: two metrics quietly overwrite each other on one
+      // board while another never receives a score.
+      final ids = GameLeaderboard.values
+          .map((b) => b.android)
+          .whereType<String>()
+          .toList();
+      expect(
+        ids.toSet().length,
+        ids.length,
+        reason: 'two leaderboards point at the same Play Console board',
+      );
+    });
+
+    test('android ids need the project id to be reachable', () {
+      // GamesIds.available gates every call, and on Android it is false
+      // without the project id. Leaderboard ids on their own would do
+      // nothing, so this catches half a configuration.
+      final anyAndroid = GameLeaderboard.values.any((b) => b.android != null);
+      if (anyAndroid) {
+        expect(
+          GamesIds.playGamesProjectId,
+          isNotNull,
+          reason:
+              'android leaderboard ids are set but playGamesProjectId is '
+              'null, so sign in never starts and none of them are reachable',
+        );
+      }
+    });
+
+    test('ids are Play Console ids, not names', () {
+      // Play issues opaque ids beginning with Cgk. A human readable string
+      // here means someone pasted the leaderboard's display name instead,
+      // which fails at submit time with a generic error.
+      for (final board in GameLeaderboard.values) {
+        final android = board.android;
+        if (android != null) {
+          expect(
+            android.startsWith('Cgk'),
+            isTrue,
+            reason:
+                '${board.name} android id "$android" does not look like a '
+                'Play Console leaderboard id',
+          );
+        }
+      }
+    });
+  });
+
+  group('against the Play Console export', () {
+    // test/fixtures/games-ids.xml is the console's own games-ids.xml, saved
+    // verbatim. Every id in the app is checked against it, because a wrong id
+    // is invisible at runtime: Play accepts an unlock for an achievement it
+    // has never heard of and does nothing with it.
+    final export = File('test/fixtures/games-ids.xml').readAsStringSync();
+
+    String? idFor(String name) => RegExp(
+      'name="$name"[^>]*>([^<]*)<',
+    ).firstMatch(export)?.group(1);
+
+    /// enum name -> the console's resource suffix. tideWalker -> tide_walker.
+    String snake(String camel) => camel
+        .replaceAllMapped(RegExp('[A-Z]'), (m) => '_${m[0]!.toLowerCase()}')
+        .toLowerCase();
+
+    test('the fixture is the right project', () {
+      expect(idFor('app_id'), GamesIds.playGamesProjectId);
+      expect(idFor('package_name'), 'com.portalcrafter.blocktopus');
+    });
+
+    test('every achievement id matches the console', () {
+      for (final a in GameAchievement.values) {
+        expect(
+          a.android,
+          idFor('achievement_${snake(a.name)}'),
+          reason: '${a.name} does not match the console export',
+        );
+      }
+    });
+
+    test('every leaderboard id matches the console', () {
+      for (final b in GameLeaderboard.values) {
+        expect(
+          b.android,
+          idFor('leaderboard_${snake(b.name)}'),
+          reason: '${b.name} does not match the console export',
+        );
+      }
+    });
+
+    test('the app knows about every achievement the console has', () {
+      // The other direction: a board created in the console and never added
+      // here is one the game can never unlock.
+      final inExport = RegExp(
+        r'name="achievement_([a-z_]+)"',
+      ).allMatches(export).map((m) => m.group(1)).toSet();
+      final inApp = GameAchievement.values.map((a) => snake(a.name)).toSet();
+      expect(
+        inExport.difference(inApp),
+        isEmpty,
+        reason: 'achievements exist in Play Console that the game never '
+            'unlocks',
+      );
+    });
+
+    test('no two achievements share an id', () {
+      final ids = GameAchievement.values
+          .map((a) => a.android)
+          .whereType<String>()
+          .toList();
+      expect(ids.toSet().length, ids.length);
+    });
+  });
+
+  group('against the console metadata csv', () {
+    // The Play import bundle's own AchievementsMetadata.csv, saved verbatim.
+    // Its columns are: Name, Description, Incremental, Steps Needed, Initial
+    // State, Points, List Order - no header row, and no quoting, which is why
+    // the importer forbids commas in names and descriptions.
+    final rows = File('test/fixtures/AchievementsMetadata.csv')
+        .readAsLinesSync()
+        .where((l) => l.trim().isNotEmpty)
+        .map((l) => l.split(','))
+        .toList();
+
+    /// "First Ripple" -> firstRipple, to match the enum.
+    String camel(String name) {
+      final parts = name.trim().toLowerCase().split(RegExp(r'\s+'));
+      return parts.first +
+          parts
+              .skip(1)
+              .map((p) => p[0].toUpperCase() + p.substring(1))
+              .join();
+    }
+
+    test('the fixture covers every achievement', () {
+      expect(rows.length, GameAchievement.values.length);
+      expect(
+        rows.map((r) => camel(r[0])).toSet(),
+        GameAchievement.values.map((a) => a.name).toSet(),
+      );
+    });
+
+    test('incremental flags match', () {
+      for (final row in rows) {
+        final a = GameAchievement.values.byName(camel(row[0]));
+        final incrementalInConsole = row[2].trim().toLowerCase() == 'true';
+        expect(
+          a.isIncremental,
+          incrementalInConsole,
+          reason:
+              '${a.name}: the console says incremental=$incrementalInConsole. '
+              'Calling unlock on an incremental achievement does not complete '
+              'it, and setSteps on a standard one fails.',
+        );
+      }
+    });
+
+    test('step targets match', () {
+      for (final row in rows) {
+        final a = GameAchievement.values.byName(camel(row[0]));
+        final stepsInConsole = int.tryParse(row[3].trim()) ?? 0;
+        expect(
+          a.steps,
+          stepsInConsole,
+          reason:
+              '${a.name} reports progress against ${a.steps} but the console '
+              'needs $stepsInConsole, so it would unlock at the wrong moment',
+        );
+      }
+    });
+
+    test('the descriptions are quoted in the code', () {
+      // Every rule in achievements.dart carries its console description as a
+      // comment. This checks the descriptions still parse as the importer
+      // requires - no commas, since the CSV has no quoting - so a later edit
+      // in the console cannot silently break the next import.
+      for (final row in rows) {
+        expect(row.length, 7, reason: '${row[0]} has the wrong column count');
+        expect(row[1].trim(), isNotEmpty);
+      }
+    });
+  });
+
   group('ios', () {
     test('has a Game Center entitlement', () {
       final entitlements = File('ios/Runner/Runner.entitlements');

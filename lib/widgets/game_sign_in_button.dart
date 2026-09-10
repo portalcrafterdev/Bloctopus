@@ -9,11 +9,12 @@ import '../games/games_ids.dart';
 import '../games/games_service.dart';
 import 'chunky_button.dart';
 
-/// The sign in pill on the home screen.
+/// The Play Games / Game Center block on the home screen.
 ///
-/// One button, two jobs. Signed out it signs in; signed in it shows who you
-/// are and opens the leaderboard. There is no third state and no sign out,
-/// because neither platform offers one - see [GamesService].
+/// Two states. Signed out it is a single key that signs in. Signed in it
+/// becomes a line naming the player with a key for each place there is to go:
+/// Achievements and Leaderboards. There is no sign out, because neither
+/// platform offers one - see [GamesService].
 ///
 /// It is a [ChunkyButton] like the two above it, so it belongs to the screen
 /// rather than sitting on top of it. A flat pill was the correct shape by
@@ -52,13 +53,7 @@ class _GameSignInButtonState extends State<GameSignInButton> {
     // No tap sound here: ChunkyButton plays it, and doubling it up on one
     // press is audible as a flam.
     final games = GamesService.instance;
-
-    if (games.signedIn) {
-      // Nothing to say when there is no leaderboard yet: the button is still
-      // honest about who is signed in, which is the other half of its job.
-      if (GamesIds.leaderboardAvailable) await games.showLeaderboard();
-      return;
-    }
+    if (games.signedIn) return;
 
     setState(() => _busy = true);
     final ok = await games.signIn();
@@ -85,37 +80,109 @@ class _GameSignInButtonState extends State<GameSignInButton> {
     return ValueListenableBuilder<GamesPlayer?>(
       valueListenable: GamesService.instance.player,
       builder: (context, player, _) {
-        return Semantics(
-          button: true,
-          label: player == null
-              ? 'Sign in with ${GamesIds.serviceName}'
-              : 'Signed in as ${player.name}',
-          child: ChunkyButton(
-            label: player?.name ?? 'Sign in with ${GamesIds.serviceName}',
-            leading: _leading(player),
-            // Only once there is somewhere for it to go. Signed in with no
-            // leaderboard yet, the button still says who you are, and an icon
-            // promising a screen that does not open would be a lie.
-            trailing: player != null && GamesIds.leaderboardAvailable
-                ? const Icon(
-                    Icons.leaderboard_rounded,
-                    size: 18,
-                    color: Color(0xFF5F6368),
-                  )
-                : null,
-            color: _face,
-            // Google's own button spec, and it reads correctly under
-            // Apple's too. ChunkyButton drops the label outline for a dark
-            // colour on its own.
-            labelColor: const Color(0xFF1F1F1F),
-            height: 48,
-            fontSize: 15,
-            onTap: _tap,
-          ),
-        );
+        if (player == null) return _signIn();
+        return _signedIn(player);
       },
     );
   }
+
+  /// Signed out: one key that starts the platform's own sign in sheet.
+  Widget _signIn() => Semantics(
+    button: true,
+    label: 'Sign in with ${GamesIds.serviceName}',
+    child: ChunkyButton(
+      label: 'Sign in with ${GamesIds.serviceName}',
+      leading: _leading(null),
+      color: _face,
+      // Google's own button spec, and it reads correctly under Apple's too.
+      // ChunkyButton drops the label outline for a dark colour on its own.
+      labelColor: const Color(0xFF1F1F1F),
+      height: 48,
+      fontSize: 15,
+      onTap: _tap,
+    ),
+  );
+
+  /// Signed in: who you are, and the two places there are to go.
+  ///
+  /// Split rather than overloaded. One key that means "sign in", then "who am
+  /// I", then "open the leaderboards" is three jobs on one control, and the
+  /// third was undiscoverable - nothing about a name says it opens anything.
+  /// Achievements had no way in at all, so twenty of them unlocked in silence.
+  ///
+  /// Each destination only appears when it exists. The same rule the sign in
+  /// key already followed: never offer a screen that will not open.
+  Widget _signedIn(GamesPlayer player) {
+    final destinations = <Widget>[
+      if (GamesIds.achievementsAvailable)
+        _destination(
+          'Achievements',
+          Icons.emoji_events_rounded,
+          () => GamesService.instance.showAchievements(),
+        ),
+      if (GamesIds.leaderboardAvailable)
+        _destination(
+          'Leaderboards',
+          Icons.leaderboard_rounded,
+          () => GamesService.instance.showLeaderboard(),
+        ),
+    ];
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _identity(player),
+        if (destinations.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (var i = 0; i < destinations.length; i++) ...[
+                if (i > 0) const SizedBox(width: 10),
+                Flexible(child: destinations[i]),
+              ],
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// The player, stated rather than offered.
+  ///
+  /// Not a button: there is nothing to do with it. Both platforms own sign
+  /// out, so a control here would either do nothing or lie.
+  Widget _identity(GamesPlayer player) => Semantics(
+    label: 'Signed in as ${player.name}',
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _leading(player),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            player.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: T.dimOnBg,
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _destination(String label, IconData icon, VoidCallback onTap) =>
+      ChunkyButton(
+        label: label,
+        icon: icon,
+        color: _face,
+        labelColor: const Color(0xFF1F1F1F),
+        height: 44,
+        // Two keys share the width the sign in key had to itself, and
+        // "Leaderboards" is the longest word either of them carries.
+        fontSize: 13,
+        onTap: onTap,
+      );
 
   Widget _leading(GamesPlayer? player) {
     if (_busy) {

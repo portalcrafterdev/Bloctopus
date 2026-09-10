@@ -58,6 +58,12 @@ class GameController extends ChangeNotifier {
   /// Ink Blast targeting mode.
   bool blastMode = false;
 
+  /// Whether any booster has been spent on this attempt.
+  ///
+  /// Feeds the Unaided achievement. Reset by [restart], so retrying a level
+  /// gives a clean attempt rather than carrying the last one's spend.
+  bool _boosterUsed = false;
+
   /// True while the tray holds three untouched pieces, which disables
   /// Reshuffle.
   bool trayIsFresh = true;
@@ -229,7 +235,12 @@ class GameController extends ChangeNotifier {
   }
 
   void _finish() {
-    awardedBooster = save.recordResult(level.id, stars, score);
+    awardedBooster = save.recordResult(
+      level.id,
+      stars,
+      score,
+      unaided: !_boosterUsed,
+    );
   }
 
   // -- boosters -------------------------------------------------------------
@@ -247,6 +258,7 @@ class GameController extends ChangeNotifier {
   bool undo() {
     if (!canUndo) return false;
     if (!save.spendBooster(BoosterId.undo)) return false;
+    _boosterUsed = true;
     final s = _undo.removeLast();
     board = s.board;
     tray = List<Piece?>.of(s.tray);
@@ -278,6 +290,7 @@ class GameController extends ChangeNotifier {
     if (!blastMode || status != LevelStatus.playing) return false;
     if (!Cell.blastable(board.kinds[cellIndex])) return false;
     if (!save.spendBooster(BoosterId.hammer)) return false;
+    _boosterUsed = true;
 
     _pushSnapshot();
     board.blast(cellIndex);
@@ -292,6 +305,7 @@ class GameController extends ChangeNotifier {
   bool reshuffle() {
     if (!canReshuffle) return false;
     if (!save.spendBooster(BoosterId.refresh)) return false;
+    _boosterUsed = true;
 
     _pushSnapshot();
     tray = _seq.trayAt(nextIndex);
@@ -317,6 +331,7 @@ class GameController extends ChangeNotifier {
     status = LevelStatus.playing;
     lossReason = LossReason.none;
     blastMode = false;
+    _boosterUsed = false;
     awardedBooster = null;
     _undo.clear();
     // Retrying is starting the level again, so the floor applies again.

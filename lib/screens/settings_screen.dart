@@ -309,7 +309,7 @@ class _Stats extends StatelessWidget {
       child: Row(
         children: [
           _stat('Levels', '${save.levelsCompleted}'),
-          _stat('Stars', '${save.stars.values.fold<int>(0, (a, b) => a + b)}'),
+          _stat('Stars', '${save.totalStars}'),
           _stat('Total score', '${save.totalScore}'),
         ],
       ),

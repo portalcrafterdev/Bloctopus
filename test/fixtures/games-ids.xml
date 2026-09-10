@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--Google Play game services IDs, exported from Play Console. The app's ids
+    are asserted against this file, so a typo cannot pass unnoticed: unlocking
+    an achievement the console has never heard of succeeds and does nothing.
+    Replace this file whenever the console export changes.-->
+<resources>
+  <string name="app_id" translatable="false">180890621658</string>
+  <string name="package_name" translatable="false">com.portalcrafter.blocktopus</string>
+  <string name="achievement_first_ripple" translatable="false">CgkI2q2v76EFEAIQBg</string>
+  <string name="achievement_tide_walker" translatable="false">CgkI2q2v76EFEAIQAQ</string>
+  <string name="achievement_reef_runner" translatable="false">CgkI2q2v76EFEAIQEQ</string>
+  <string name="achievement_deep_diver" translatable="false">CgkI2q2v76EFEAIQEg</string>
+  <string name="achievement_trench_crawler" translatable="false">CgkI2q2v76EFEAIQBw</string>
+  <string name="achievement_abyss_dweller" translatable="false">CgkI2q2v76EFEAIQCQ</string>
+  <string name="achievement_ink_sovereign" translatable="false">CgkI2q2v76EFEAIQDA</string>
+  <string name="achievement_first_light" translatable="false">CgkI2q2v76EFEAIQDQ</string>
+  <string name="achievement_constellation" translatable="false">CgkI2q2v76EFEAIQDw</string>
+  <string name="achievement_star_chart" translatable="false">CgkI2q2v76EFEAIQEA</string>
+  <string name="achievement_perfectionist" translatable="false">CgkI2q2v76EFEAIQBQ</string>
+  <string name="achievement_flawless_depths" translatable="false">CgkI2q2v76EFEAIQAw</string>
+  <string name="achievement_ten_thousand" translatable="false">CgkI2q2v76EFEAIQEw</string>
+  <string name="achievement_six_figures" translatable="false">CgkI2q2v76EFEAIQDg</string>
+  <string name="achievement_millionaire" translatable="false">CgkI2q2v76EFEAIQFA</string>
+  <string name="achievement_tide_pools_cleared" translatable="false">CgkI2q2v76EFEAIQBA</string>
+  <string name="achievement_halfway_down" translatable="false">CgkI2q2v76EFEAIQAg</string>
+  <string name="achievement_still_water" translatable="false">CgkI2q2v76EFEAIQCw</string>
+  <string name="achievement_chain_reaction" translatable="false">CgkI2q2v76EFEAIQCg</string>
+  <string name="achievement_unaided" translatable="false">CgkI2q2v76EFEAIQCA</string>
+  <string name="leaderboard_total_score" translatable="false">CgkI2q2v76EFEAIQFQ</string>
+  <string name="leaderboard_levels_completed" translatable="false">CgkI2q2v76EFEAIQFg</string>
+  <string name="leaderboard_stars_earned" translatable="false">CgkI2q2v76EFEAIQFw</string>
+</resources>

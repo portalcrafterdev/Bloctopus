@@ -260,7 +260,7 @@ class _MapScreenState extends State<MapScreen> {
                 const SizedBox(height: 2),
                 Text(
                   '${save.levelsCompleted} levels, '
-                  '${save.stars.values.fold<int>(0, (a, b) => a + b)} stars',
+                  '${save.totalStars} stars',
                   style: T.dimOnBg,
                   overflow: TextOverflow.ellipsis,
                 ),

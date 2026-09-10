@@ -10,6 +10,8 @@ import '../game/audio.dart';
 import '../game/board_state.dart';
 import '../game/game_controller.dart';
 import '../game/level_loader.dart';
+import '../games/achievements.dart';
+import '../games/games_ids.dart';
 import '../games/games_service.dart';
 import '../models/level.dart';
 import '../models/save_data.dart';
@@ -197,6 +199,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         if (m != null) _particles.inkBubbles(m);
         _shake(14, 280, reduce);
         Haptics.heavy();
+        // "Clear three lines with a single piece." This is the moment, and
+        // the only one: it is a property of the placement rather than of the
+        // save, so it cannot be derived at the end of the level.
+        unawaited(GamesService.instance.unlock(GameAchievement.chainReaction));
       } else if (r.linesCleared == 2) {
         _shake(8, 200, reduce);
         Haptics.medium();
@@ -588,11 +594,20 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   Future<void> _showResult() async {
     final g = _game;
     if (!mounted || g == null) return;
-    // The controller has already folded this level's score into the running
-    // total, so this is the first moment the new total exists. Not awaited:
-    // it is a network call, it is silent either way, and nothing below it
-    // depends on the answer.
-    unawaited(GamesService.instance.submitTotalScore(widget.save.totalScore));
+    // The controller has already folded this level's result into the save, so
+    // this is the first moment all three totals exist. Not awaited: they are
+    // network calls, they are silent either way, and nothing below depends on
+    // the answer.
+    unawaited(
+      GamesService.instance.submitProgress(
+        totalScore: widget.save.totalScore,
+        levelsCompleted: widget.save.levelsCompleted,
+        starsEarned: widget.save.totalStars,
+      ),
+    );
+    unawaited(
+      GamesService.instance.report(achievementProgress(widget.save)),
+    );
 
     final action = await showResultSheet(
       context,

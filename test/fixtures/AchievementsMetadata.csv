@@ -1,0 +1,20 @@
+First Ripple,Complete your first level.,False,,Revealed,5,1
+Tide Walker,Complete 10 levels.,True,10,Revealed,10,2
+Reef Runner,Complete 50 levels.,True,50,Revealed,20,3
+Deep Diver,Complete 100 levels.,True,100,Revealed,30,4
+Trench Crawler,Complete 250 levels.,True,250,Revealed,50,5
+Abyss Dweller,Complete 500 levels.,True,500,Revealed,75,6
+Ink Sovereign,Complete 1000 levels.,True,1000,Revealed,130,7
+First Light,Earn three stars on any level.,False,,Revealed,5,8
+Constellation,Earn 100 stars.,True,100,Revealed,25,9
+Star Chart,Earn 500 stars.,True,500,Revealed,50,10
+Perfectionist,Earn three stars on 50 levels.,True,50,Revealed,60,11
+Flawless Depths,Earn three stars on 200 levels.,True,200,Revealed,80,12
+Ten Thousand,Reach a total score of 10000.,False,,Revealed,15,13
+Six Figures,Reach a total score of 100000.,False,,Revealed,40,14
+Millionaire,Reach a total score of 1000000.,False,,Revealed,125,15
+Tide Pools Cleared,Complete every level in Tide Pools.,False,,Revealed,35,16
+Halfway Down,Reach the Abyss in chapter 10.,False,,Revealed,45,17
+Still Water,Reach Still Water in chapter 20.,False,,Hidden,70,18
+Chain Reaction,Clear three lines with a single piece.,False,,Hidden,60,19
+Unaided,Complete 25 levels without using a booster.,True,25,Revealed,70,20
