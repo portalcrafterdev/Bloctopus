@@ -288,6 +288,22 @@ void main() {
     });
   });
 
+  group('the games service', () {
+    test('never fakes a signed in player', () {
+      // There was briefly a --dart-define preview that filled `player` in so
+      // the signed in layout could be seen before sign in worked. It is gone.
+      // A build that claims someone is signed in when nobody is would submit
+      // nothing, unlock nothing and report no error, which looks exactly like
+      // a broken integration.
+      final source = File('lib/games/games_service.dart').readAsStringSync();
+      expect(
+        source.contains('FAKE_GAMES_USER'),
+        isFalse,
+        reason: 'the fake player preview must not come back',
+      );
+    });
+  });
+
   group('ios', () {
     test('has a Game Center entitlement', () {
       final entitlements = File('ios/Runner/Runner.entitlements');

@@ -69,6 +69,7 @@ class GamesService {
   @visibleForTesting
   bool debugDisabled = false;
 
+
   /// Subscribes to the platform's own view of who is signed in.
   ///
   /// Called from the splash screen alongside the ads. Not awaited: the stream

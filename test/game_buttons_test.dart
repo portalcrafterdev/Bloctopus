@@ -2,6 +2,7 @@ import 'package:blocktopus/games/games_ids.dart';
 import 'package:blocktopus/games/games_service.dart';
 import 'package:blocktopus/widgets/game_sign_in_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// The home screen's Play Games block.
@@ -68,6 +69,26 @@ void main() {
       isFalse,
       reason: 'the two keys must not sit on top of each other',
     );
+  });
+
+  testWidgets('neither label is truncated', (tester) async {
+    // The bug this exists for: laid out side by side, both ellipsed on a real
+    // phone to "Achieveme..." and "Leaderboar...". `find.text` still found
+    // them, because the string is in the widget either way - only the render
+    // object knows it did not fit.
+    GamesService.instance.player.value = const GamesPlayer(name: 'Reef');
+    await pump(tester);
+
+    for (final label in <String>['Achievements', 'Leaderboards']) {
+      final finder = find.text(label);
+      if (finder.evaluate().isEmpty) continue;
+      final paragraph = tester.renderObject<RenderParagraph>(finder);
+      expect(
+        paragraph.didExceedMaxLines,
+        isFalse,
+        reason: '"$label" is ellipsed - the key is too narrow for its label',
+      );
+    }
   });
 
   testWidgets('the block does not overflow a narrow phone', (tester) async {

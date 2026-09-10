@@ -132,17 +132,9 @@ class _GameSignInButtonState extends State<GameSignInButton> {
       mainAxisSize: MainAxisSize.min,
       children: [
         _identity(player),
-        if (destinations.isNotEmpty) ...[
+        for (final destination in destinations) ...[
           const SizedBox(height: 10),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (var i = 0; i < destinations.length; i++) ...[
-                if (i > 0) const SizedBox(width: 10),
-                Flexible(child: destinations[i]),
-              ],
-            ],
-          ),
+          destination,
         ],
       ],
     );
@@ -171,6 +163,13 @@ class _GameSignInButtonState extends State<GameSignInButton> {
     ),
   );
 
+  /// Full width, stacked, like Play and Levels above.
+  ///
+  /// Side by side fitted on paper and truncated on a phone: ChunkyButton
+  /// spends 68 logical pixels of every key on padding, glyph and gap, so at
+  /// half the content width "Achievements" and "Leaderboards" both ellipsed
+  /// to "Achieveme..." and "Leaderboar...". The column already scrolls when
+  /// it runs out of room, so the height these cost is free.
   Widget _destination(String label, IconData icon, VoidCallback onTap) =>
       ChunkyButton(
         label: label,
@@ -178,9 +177,9 @@ class _GameSignInButtonState extends State<GameSignInButton> {
         color: _face,
         labelColor: const Color(0xFF1F1F1F),
         height: 44,
-        // Two keys share the width the sign in key had to itself, and
-        // "Leaderboards" is the longest word either of them carries.
-        fontSize: 13,
+        // Below the 15 the sign in key uses, so these stay subordinate to it
+        // and to the two play keys.
+        fontSize: 14,
         onTap: onTap,
       );
 
