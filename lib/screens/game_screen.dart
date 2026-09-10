@@ -19,6 +19,7 @@ import '../widgets/blast_hammer.dart';
 import '../widgets/board_view.dart';
 import '../widgets/booster_bar.dart';
 import '../widgets/combo_text.dart';
+import '../widgets/game_text.dart';
 import '../widgets/goal_banner.dart';
 import '../widgets/line_flash.dart';
 import '../widgets/mascot_view.dart';
@@ -943,7 +944,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(info.theme, style: T.title),
+                GameText(info.theme, fontSize: 30),
                 const SizedBox(height: 24),
                 const MascotView(size: 120, state: MascotState.idle),
                 const SizedBox(height: 16),

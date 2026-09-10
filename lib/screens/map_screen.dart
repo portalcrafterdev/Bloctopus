@@ -9,6 +9,7 @@ import '../models/level.dart';
 import '../models/save_data.dart';
 import '../widgets/banner_ad_view.dart';
 import '../widgets/block_field.dart';
+import '../widgets/game_text.dart';
 import '../widgets/mascot_view.dart';
 import 'game_screen.dart';
 import 'settings_screen.dart';
@@ -210,10 +211,9 @@ class _MapScreenState extends State<MapScreen> {
               // One line, always. The banner sits in a fixed band, so a theme
               // name that wraps - or a system font large enough to make it
               // wrap - pushes the panel straight through the bottom of it.
-              Text(
+              GameText(
                 info.theme,
-                style: T.title,
-                textAlign: TextAlign.center,
+                fontSize: 26,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),

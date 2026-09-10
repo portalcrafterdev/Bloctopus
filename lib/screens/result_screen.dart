@@ -4,6 +4,7 @@ import '../app/theme.dart';
 import '../game/audio.dart';
 import '../models/level.dart';
 import '../models/save_data.dart';
+import '../widgets/game_text.dart';
 import '../widgets/mascot_view.dart';
 import '../widgets/menu_button.dart';
 
@@ -95,9 +96,12 @@ class _ResultSheetState extends State<ResultSheet> {
                 state: won ? MascotState.excited : MascotState.sad,
               ),
               const SizedBox(height: 10),
-              Text(
+              GameText(
                 won ? 'Level ${widget.level.id} complete' : 'Out of options',
-                style: T.title,
+                fontSize: 26,
+                // Gold for a win, violet for a loss: the same shape either
+                // way, so the sheet does not shout at a player who just lost.
+                colors: won ? GameText.gold : GameText.violet,
               ),
               const SizedBox(height: 6),
               Text(
