@@ -31,6 +31,7 @@ class Wordmark extends StatelessWidget {
     // Weight 600 is the heaviest section 3 allows, so the weight the mark
     // needs comes from the stroke rather than from a bolder face.
     final base = TextStyle(
+      fontFamily: kDisplayFont,
       fontSize: fontSize,
       fontWeight: FontWeight.w600,
       letterSpacing: 1.2,

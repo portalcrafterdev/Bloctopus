@@ -34,3 +34,13 @@ flutter:
   assets:
     - assets/levels/
     - assets/audio/
+
+  # Bagel Fat One, by Kyung-won Baek. SIL Open Font License, so it ships with
+  # the game; the licence is in assets/fonts/BagelFatOne-OFL.txt and the
+  # provenance in NOTICE.txt beside it. Used app wide - see kDisplayFont in
+  # theme.dart. The file is 1.6 MB because it carries a full Hangul set the
+  # game never draws; subsetting it to Latin would reclaim most of that.
+  fonts:
+    - family: BagelFatOne
+      fonts:
+        - asset: assets/fonts/BagelFatOne-Regular.ttf

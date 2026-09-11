@@ -84,6 +84,7 @@ class GameText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = TextStyle(
+      fontFamily: kDisplayFont,
       fontSize: fontSize,
       fontWeight: FontWeight.w600,
       letterSpacing: letterSpacing,
@@ -161,6 +162,7 @@ class _BackingPainter extends CustomPainter {
         // Built rather than copied: copyWith cannot drop a colour, and a
         // style may carry `color` or `foreground`, never both.
         style: TextStyle(
+          fontFamily: style.fontFamily,
           fontSize: style.fontSize,
           fontWeight: style.fontWeight,
           letterSpacing: style.letterSpacing,

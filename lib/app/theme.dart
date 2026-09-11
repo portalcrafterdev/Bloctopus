@@ -75,53 +75,85 @@ const double kDragLiftFactor = 1.4;
 
 Color paletteColor(int index) => palette[index % palette.length];
 
+/// The game's face: Bagel Fat One, SIL Open Font License, see `assets/fonts/`.
+///
+/// Everything, by the owner's decision - every style below carries it, and
+/// [buildTheme] sets it app wide so a widget that never touches [T] matches
+/// too. It is a display face used as a text face, which is a deliberate
+/// choice with two consequences worth knowing.
+///
+/// It is very round and very heavy, so it is much wider than the platform
+/// font at the same size. Anything measured against a fixed band - the map's
+/// chapter banner, the two play keys, the booster chips - has less room than
+/// it used to, and `layout_test.dart` is what catches that, across four
+/// screen sizes.
+///
+/// It also carries a full Hangul set, which is why the file is 1.6 MB against
+/// the 80 KB of the Arbutus it replaced. The game draws none of it. That is
+/// still well inside section 2's 40 MB budget, but subsetting the font to the
+/// characters actually used would reclaim nearly all of it.
+///
+/// One weight, which is the whole point of picking a display face rather than
+/// a heavier weight of a text font: section 3 allows nothing above 600, and
+/// this carries the heft without breaking that.
+const String kDisplayFont = 'BagelFatOne';
+
 /// Text styles. Only weights 400, 500 and 600 are allowed.
 class T {
   static const TextStyle display = TextStyle(
+    fontFamily: kDisplayFont,
     color: textPrimary,
     fontSize: 34,
     fontWeight: FontWeight.w600,
     letterSpacing: 0.2,
   );
   static const TextStyle title = TextStyle(
+    fontFamily: kDisplayFont,
     color: textPrimary,
     fontSize: 22,
     fontWeight: FontWeight.w600,
   );
   static const TextStyle heading = TextStyle(
+    fontFamily: kDisplayFont,
     color: textPrimary,
     fontSize: 18,
     fontWeight: FontWeight.w500,
   );
   static const TextStyle body = TextStyle(
+    fontFamily: kDisplayFont,
     color: textLilac,
     fontSize: 15,
     fontWeight: FontWeight.w400,
     height: 1.35,
   );
   static const TextStyle label = TextStyle(
+    fontFamily: kDisplayFont,
     color: textLilac,
     fontSize: 13,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.3,
   );
   static const TextStyle dim = TextStyle(
+    fontFamily: kDisplayFont,
     color: textDim,
     fontSize: 13,
     fontWeight: FontWeight.w400,
   );
   static const TextStyle score = TextStyle(
+    fontFamily: kDisplayFont,
     color: textPrimary,
     fontSize: 28,
     fontWeight: FontWeight.w600,
     fontFeatures: [FontFeature.tabularFigures()],
   );
   static const TextStyle accent = TextStyle(
+    fontFamily: kDisplayFont,
     color: textAccent,
     fontSize: 15,
     fontWeight: FontWeight.w600,
   );
   static const TextStyle combo = TextStyle(
+    fontFamily: kDisplayFont,
     color: textAccent,
     fontSize: 26,
     fontWeight: FontWeight.w600,
@@ -130,33 +162,39 @@ class T {
   // -- on the light background, where there is no dark panel behind the text --
 
   static const TextStyle displayOnBg = TextStyle(
+    fontFamily: kDisplayFont,
     color: textOnBg,
     fontSize: 34,
     fontWeight: FontWeight.w600,
     letterSpacing: 0.2,
   );
   static const TextStyle titleOnBg = TextStyle(
+    fontFamily: kDisplayFont,
     color: textOnBg,
     fontSize: 22,
     fontWeight: FontWeight.w600,
   );
   static const TextStyle headingOnBg = TextStyle(
+    fontFamily: kDisplayFont,
     color: textOnBg,
     fontSize: 18,
     fontWeight: FontWeight.w500,
   );
   static const TextStyle labelOnBg = TextStyle(
+    fontFamily: kDisplayFont,
     color: textOnBgDim,
     fontSize: 13,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.3,
   );
   static const TextStyle dimOnBg = TextStyle(
+    fontFamily: kDisplayFont,
     color: textOnBgDim,
     fontSize: 13,
     fontWeight: FontWeight.w400,
   );
   static const TextStyle scoreOnBg = TextStyle(
+    fontFamily: kDisplayFont,
     color: textOnBg,
     fontSize: 28,
     fontWeight: FontWeight.w600,
@@ -223,7 +261,10 @@ ThemeData buildTheme() {
       primary: inkPurple,
       secondary: textAccent,
     ),
-    fontFamily: null,
+    // App wide, so a widget that never touches [T] - a SnackBar, a
+    // TextButton, a Material default - is set in the same face as everything
+    // around it.
+    fontFamily: kDisplayFont,
     splashFactory: NoSplash.splashFactory,
     textTheme: const TextTheme(
       bodyMedium: T.body,

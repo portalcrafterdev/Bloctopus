@@ -50,7 +50,27 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Installs beside the Play build rather than over it.
+            //
+            // A debug build is signed with the debug keystore and the store
+            // build is not, so Android refuses to replace one with the other:
+            // INSTALL_FAILED_UPDATE_INCOMPATIBLE. The only way to force it is
+            // to uninstall first, which deletes the player's save.
+            //
+            // A different application id makes them different apps, so both
+            // can sit on one phone with separate save data. The consequence
+            // is that Play Games and AdMob do not recognise this id - neither
+            // is registered against it - so sign in fails and only test ads
+            // serve. Both are already true of a debug build.
+            applicationIdSuffix = ".debug"
+            // A manifest placeholder rather than a resValue: custom resource
+            // values are a build feature that is off by default in AGP 8, and
+            // a label does not need one turned on.
+            manifestPlaceholders["appLabel"] = "Blocktopus debug"
+        }
         release {
+            manifestPlaceholders["appLabel"] = "Blocktopus"
             signingConfig = if (hasReleaseKeystore) {
                 signingConfigs.getByName("release")
             } else {

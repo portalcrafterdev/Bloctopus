@@ -304,6 +304,61 @@ void main() {
     });
   });
 
+  group('the android application id', () {
+    final gradle = File('android/app/build.gradle.kts').readAsStringSync();
+
+    test('is the one the store knows', () {
+      // It can never change once published: Play treats a different
+      // application id as a different app.
+      expect(
+        gradle.contains('applicationId = "com.portalcrafter.blocktopus"'),
+        isTrue,
+      );
+    });
+
+    test('is suffixed only on debug', () {
+      // Debug installs beside the store build rather than over it, so a
+      // sideloaded build cannot destroy a player's save. The suffix must stay
+      // inside the debug block: shipping a `.debug` id to Play would publish
+      // an app nobody's existing install could update to.
+      final debugBlock = RegExp(
+        r'debug\s*\{(.*?)\n        \}',
+        dotAll: true,
+      ).firstMatch(gradle)?.group(1);
+      expect(debugBlock, isNotNull, reason: 'no debug build type');
+      expect(debugBlock, contains('applicationIdSuffix = ".debug"'));
+
+      final releaseBlock = RegExp(
+        r'release\s*\{(.*?)\n        \}',
+        dotAll: true,
+      ).firstMatch(gradle)?.group(1);
+      expect(releaseBlock, isNotNull, reason: 'no release build type');
+      expect(
+        releaseBlock!.contains('applicationIdSuffix'),
+        isFalse,
+        reason: 'release must ship the real application id, never a suffixed '
+            'one - a store build with a .debug id is unupdatable',
+      );
+    });
+
+    test('the two builds are labelled apart on the home screen', () {
+      // Two apps with the same name and different ids is worse than one: the
+      // tester cannot tell which icon is the store build and which is theirs.
+      final manifest = File(
+        'android/app/src/main/AndroidManifest.xml',
+      ).readAsStringSync();
+      expect(manifest.contains(r'android:label="${appLabel}"'), isTrue);
+      // Both build types must supply it, or the merge fails with an
+      // unresolved placeholder rather than a readable error.
+      expect(gradle.contains('manifestPlaceholders["appLabel"]'), isTrue);
+      expect(
+        RegExp(r'manifestPlaceholders\["appLabel"\]').allMatches(gradle).length,
+        2,
+        reason: 'debug and release each need a label',
+      );
+    });
+  });
+
   group('ios', () {
     test('has a Game Center entitlement', () {
       final entitlements = File('ios/Runner/Runner.entitlements');
