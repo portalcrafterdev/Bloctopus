@@ -110,13 +110,14 @@ void main() {
     });
 
     test('the home gradient really does descend into the scaffold', () {
-      // Its whole shape: deep at the top, ending on `bg` so the screen and the
-      // scaffold behind it are continuous.
+      // Its whole shape: sunlit at the top, deepening downwards, ending on
+      // `bg` so the screen and the scaffold behind it are continuous. It used
+      // to run the other way; the game now descends the way its chapters do.
       for (var i = 1; i < homeGradient.length; i++) {
         expect(
           homeGradient[i].computeLuminance(),
-          greaterThan(homeGradient[i - 1].computeLuminance()),
-          reason: 'stop $i is not lighter than the one above it',
+          lessThan(homeGradient[i - 1].computeLuminance()),
+          reason: 'stop $i is not deeper than the one above it',
         );
       }
       expect(homeGradient.last, bg);

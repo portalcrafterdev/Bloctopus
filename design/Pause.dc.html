@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #FF6B5E; } a:hover { color: #E2493C; }
+    .dc-root { font-family: Nunito, "Helvetica Neue", Arial, sans-serif; }
+    .sticker { border: 3px solid #FFFFFF; box-shadow: 0 6px 0 rgba(3,60,92,.28), 0 12px 22px -8px rgba(3,60,92,.5); }
+    .item { height: 56px; border-radius: 18px; background: rgba(255,255,255,.2); border: 3px solid rgba(255,255,255,.5); color: #fff; font-family: Fredoka, sans-serif; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 13px; padding: 0 18px; cursor: pointer; text-align: left; }
+  </style>
+</helmet>
+
+<div class="dc-root" style="width: 390px; height: 844px; overflow: hidden; position: relative; background: linear-gradient(180deg, #1FC9CE 0%, #0F92CE 46%, #0A69B8 100%); color: #fff;">
+
+  <!-- frozen board behind -->
+  <div style="position: absolute; inset: 0; opacity: .32; filter: blur(1.5px);">
+    <div style="margin: 160px 18px 0; padding: 10px; border-radius: 26px; background: rgba(3,60,92,.28);">
+      <div style="display: grid; grid-template-columns: repeat(8, minmax(0,1fr)); gap: 4px;">
+        <div style="aspect-ratio:1; border-radius:26%; background:#46DC5A;"></div><div style="aspect-ratio:1; border-radius:26%; background:rgba(3,60,92,.22);"></div><div style="aspect-ratio:1; border-radius:26%; background:#FFC61F;"></div><div style="aspect-ratio:1; border-radius:26%; background:rgba(3,60,92,.22);"></div><div style="aspect-ratio:1; border-radius:26%; background:#C77DFF;"></div><div style="aspect-ratio:1; border-radius:26%; background:rgba(3,60,92,.22);"></div><div style="aspect-ratio:1; border-radius:26%; background:#2FE3D5;"></div><div style="aspect-ratio:1; border-radius:26%; background:rgba(3,60,92,.22);"></div>
+        <div style="aspect-ratio:1; border-radius:26%; background:rgba(3,60,92,.22);"></div><div style="aspect-ratio:1; border-radius:26%; background:#3D9BFF;"></div><div style="aspect-ratio:1; border-radius:26%; background:rgba(3,60,92,.22);"></div><div style="aspect-ratio:1; border-radius:26%; background:#FF6B18;"></div><div style="aspect-ratio:1; border-radius:26%; background:rgba(3,60,92,.22);"></div><div style="aspect-ratio:1; border-radius:26%; background:#F857C2;"></div><div style="aspect-ratio:1; border-radius:26%; background:rgba(3,60,92,.22);"></div><div style="aspect-ratio:1; border-radius:26%; background:#46DC5A;"></div>
+        <div style="aspect-ratio:1; border-radius:26%; background:#FFC61F;"></div><div style="aspect-ratio:1; border-radius:26%; background:rgba(3,60,92,.22);"></div><div style="aspect-ratio:1; border-radius:26%; background:#2FE3D5;"></div><div style="aspect-ratio:1; border-radius:26%; background:rgba(3,60,92,.22);"></div><div style="aspect-ratio:1; border-radius:26%; background:#46DC5A;"></div><div style="aspect-ratio:1; border-radius:26%; background:rgba(3,60,92,.22);"></div><div style="aspect-ratio:1; border-radius:26%; background:#C77DFF;"></div><div style="aspect-ratio:1; border-radius:26%; background:rgba(3,60,92,.22);"></div>
+      </div>
+    </div>
+  </div>
+  <div style="position: absolute; inset: 0; background: rgba(5,60,105,.7);"></div>
+
+  <!-- panel -->
+  <div class="sticker" style="position: absolute; left: 24px; right: 24px; top: 50%; transform: translateY(-50%); padding: 24px 20px 20px; border-radius: 30px; background: linear-gradient(180deg, #1AC0D4, #0C82C4); display: flex; flex-direction: column; gap: 18px;">
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 11px;">
+      <div class="sticker" style="width: 58px; height: 58px; border-radius: 20px; background: #FFD23F; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 0 rgba(3,60,92,.28);">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#7A4A00"><rect x="6" y="4" width="4" height="16" rx="1.8"/><rect x="14" y="4" width="4" height="16" rx="1.8"/></svg>
+      </div>
+      <div style="text-align: center;">
+        <div style="font-family: Fredoka, sans-serif; font-weight: 700; font-size: 23px; letter-spacing: -.3px; text-shadow: 0 3px 0 rgba(3,60,92,.3);">Paused</div>
+        <div style="font-size: 12.5px; font-weight: 800; color: rgba(255,255,255,.8); margin-top: 2px;">Level 102 &middot; Kelp Forest</div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 11px;">
+      <button class="sticker" style="height: 60px; border-radius: 21px; cursor: pointer; background: linear-gradient(180deg, #FFDE63, #FFAE1F); color: #7A4A00; font-family: Fredoka, sans-serif; font-size: 19px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#7A4A00"><path d="M8 5.5v13l11-6.5-11-6.5z"/></svg>
+        Resume
+      </button>
+
+      <button class="item">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10a8 8 0 10-2 7"/><path d="M20 4v6h-6"/></svg>
+        Restart level
+      </button>
+      <button class="item">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.4M12 18.6V21M21 12h-2.4M5.4 12H3M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7M18.4 18.4l-1.7-1.7M7.3 7.3L5.6 5.6"/></svg>
+        Settings
+      </button>
+      <button class="item" style="background: rgba(255,107,94,.26); border-color: #FF6B5E;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 012 2v12a2 2 0 01-2 2h-4"/><path d="M9 16l-4-4 4-4M5 12h11"/></svg>
+        Quit to map
+      </button>
+    </div>
+
+    <div style="display: flex; align-items: flex-start; gap: 9px; padding: 10px 13px; border-radius: 15px; background: rgba(3,60,92,.24); border: 2px solid rgba(255,255,255,.25);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFD23F" stroke-width="2.4" stroke-linecap="round" style="flex-shrink: 0; margin-top: 1px;"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.2v.1"/></svg>
+      <span style="font-size: 11.5px; font-weight: 700; line-height: 1.45; color: rgba(255,255,255,.85);">Leaving now starts this level over.</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

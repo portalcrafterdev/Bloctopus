@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #FF6B5E; } a:hover { color: #E2493C; }
+    .dc-root { font-family: Nunito, "Helvetica Neue", Arial, sans-serif; }
+    .sticker { border: 3px solid #FFFFFF; box-shadow: 0 6px 0 rgba(3,60,92,.28), 0 12px 22px -8px rgba(3,60,92,.5); }
+    @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+    @keyframes rise { 0% { transform: translateY(0); opacity: 0; } 20% { opacity: .8; } 100% { transform: translateY(-260px); opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { .anim { animation: none !important; } }
+  </style>
+</helmet>
+
+<div class="dc-root" style="width: 390px; height: 844px; overflow: hidden; position: relative; background: linear-gradient(180deg, #2EE6D2 0%, #14BCD8 44%, #0B74C4 100%); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+
+  <div style="position: absolute; inset: 0; pointer-events: none; overflow: hidden;">
+    <div style="position: absolute; left: -50px; top: -140px; width: 220px; height: 500px; background: rgba(255,255,255,.15); transform: rotate(17deg); filter: blur(2px);"></div>
+    <div style="position: absolute; left: 210px; top: -160px; width: 120px; height: 480px; background: rgba(255,255,255,.11); transform: rotate(17deg); filter: blur(2px);"></div>
+    <div class="anim" style="position: absolute; left: 78px; top: 640px; width: 11px; height: 11px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,.5); animation: rise 6s ease-in infinite;"></div>
+    <div class="anim" style="position: absolute; left: 296px; top: 700px; width: 8px; height: 8px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,.45); animation: rise 7.5s ease-in infinite .9s;"></div>
+    <div class="anim" style="position: absolute; left: 196px; top: 720px; width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,.35); animation: rise 8.5s ease-in infinite 1.8s;"></div>
+  </div>
+
+  <div class="anim" style="position: relative; display: flex; flex-direction: column; align-items: center; gap: 22px; animation: bob 4.5s ease-in-out infinite;">
+    <div style="position: relative; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.36), rgba(255,255,255,.09) 62%, rgba(255,255,255,0) 70%); display: flex; align-items: center; justify-content: center;">
+      <svg viewBox="0 0 150 140" width="156" height="146">
+        <g stroke="#8B5CF0" stroke-width="14" stroke-linecap="round" fill="none">
+          <path d="M32 84 C25 104 27 118 33 128"/>
+          <path d="M52 92 C48 112 49 124 54 133"/>
+          <path d="M75 95 C75 114 75 125 75 134"/>
+          <path d="M98 92 C102 112 101 124 96 133"/>
+          <path d="M118 84 C125 104 123 118 117 128"/>
+        </g>
+        <ellipse cx="75" cy="57" rx="53" ry="48" fill="#8B5CF0"/>
+        <ellipse cx="75" cy="40" rx="43" ry="29" fill="#B47CF5" opacity=".55"/>
+        <ellipse cx="57" cy="57" rx="13" ry="14.5" fill="#fff"/>
+        <ellipse cx="93" cy="57" rx="13" ry="14.5" fill="#fff"/>
+        <circle cx="59" cy="60" r="6.6" fill="#123A52"/>
+        <circle cx="95" cy="60" r="6.6" fill="#123A52"/>
+        <circle cx="56.5" cy="56" r="2.3" fill="#fff"/>
+        <circle cx="92.5" cy="56" r="2.3" fill="#fff"/>
+        <ellipse cx="42" cy="74" rx="8.5" ry="5.5" fill="#FF9AC1" opacity=".7"/>
+        <ellipse cx="108" cy="74" rx="8.5" ry="5.5" fill="#FF9AC1" opacity=".7"/>
+        <path d="M67 75 q8 8 16 0" stroke="#123A52" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+      <div style="font-family: Fredoka, sans-serif; font-weight: 700; font-size: 42px; line-height: 1; letter-spacing: -.5px; text-shadow: 0 4px 0 rgba(3,60,92,.35);">Blocktopus</div>
+      <div class="sticker" style="padding: 4px 14px; border-radius: 999px; background: #FF6B5E; font-size: 10px; font-weight: 900; letter-spacing: 2.4px; text-transform: uppercase;">Block puzzle</div>
+    </div>
+  </div>
+
+  <div style="position: absolute; bottom: 92px; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 13px;">
+    <div style="width: 148px; height: 9px; border-radius: 999px; background: rgba(3,60,92,.3); border: 2px solid rgba(255,255,255,.4); overflow: hidden;">
+      <div style="width: 62%; height: 100%; background: linear-gradient(90deg, #FFD23F, #FF9F1C);"></div>
+    </div>
+    <div style="font-size: 11.5px; font-weight: 800; letter-spacing: 1.6px; color: rgba(255,255,255,.85);">Diving in</div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

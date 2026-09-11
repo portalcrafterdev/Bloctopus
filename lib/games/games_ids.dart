@@ -205,6 +205,21 @@ enum GameAchievement {
   /// Incremental achievements report progress; standard ones just unlock.
   bool get isIncremental => steps > 0;
 
+  /// The name as Play Console spells it, for the one place the game shows an
+  /// achievement itself rather than handing it to Google: the home screen's
+  /// "closest to" row. Derived from the enum name so the two cannot drift -
+  /// `tidePoolsCleared` reads back as "Tide pools cleared".
+  ///
+  /// Sentence case rather than the console's title case, because section 3
+  /// asks for sentence case and this string sits among the game's own copy.
+  String get label {
+    final spaced = name.replaceAllMapped(
+      RegExp('[A-Z]'),
+      (m) => ' ${m[0]!.toLowerCase()}',
+    );
+    return spaced[0].toUpperCase() + spaced.substring(1);
+  }
+
   /// The id for the platform in hand, or null where it does not exist yet.
   String? get id => GamesIds._isIOS ? ios : android;
 

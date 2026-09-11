@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Chivo:wght@400;700;900&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #E03E5C; } a:hover { color: #B62C46; }
+    .dc-root { font-family: Chivo, "Helvetica Neue", Arial, sans-serif; }
+    .ink { border: 3px solid #1E1B16; }
+    .stamp { box-shadow: 4px 4px 0 #1E1B16; }
+  </style>
+</helmet>
+
+<div class="dc-root" style="width: 390px; height: 844px; overflow: hidden; position: relative; background: #F2ECDD; color: #1E1B16; display: flex; flex-direction: column;">
+
+  <!-- halftone texture -->
+  <div style="position: absolute; inset: 0; pointer-events: none; opacity: .16; background-image: radial-gradient(#1E1B16 1px, transparent 1.2px); background-size: 7px 7px;"></div>
+  <!-- riso misregistration band -->
+  <div style="position: absolute; left: -60px; top: 180px; width: 520px; height: 190px; background: #FF5C7A; opacity: .16; transform: rotate(-6deg);"></div>
+
+  <!-- top bar -->
+  <div style="position: relative; display: flex; align-items: center; justify-content: space-between; padding: 22px 20px 0;">
+    <div class="ink" style="display: flex; align-items: center; gap: 7px; padding: 6px 12px; background: #FFCB3D;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="#1E1B16"><path d="M12 3l2.7 5.9 6.3.7-4.7 4.3 1.3 6.2L12 17l-5.6 3.1 1.3-6.2L3 9.6l6.3-.7L12 3z"/></svg>
+      <span style="font-size: 13px; font-weight: 900;">148</span>
+    </div>
+    <button class="ink" style="width: 40px; height: 40px; background: #F2ECDD; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1E1B16" stroke-width="2.6" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg>
+    </button>
+  </div>
+
+  <!-- mascot -->
+  <div style="position: relative; display: flex; flex-direction: column; align-items: center; padding: 18px 0 0;">
+    <svg viewBox="0 0 160 146" width="158" height="144">
+      <g stroke="#1E1B16" stroke-width="3" fill="#8B5CF0">
+        <path d="M80 16c-29 0-52 21-52 47 0 13 5 22 12 29 0 0-4 22 3 34 4-9 10-16 10-16 8 4 17 6 27 6s19-2 27-6c0 0 6 7 10 16 7-12 3-34 3-34 7-7 12-16 12-29 0-26-23-47-52-47z"/>
+      </g>
+      <ellipse cx="62" cy="60" rx="13" ry="15" fill="#fff" stroke="#1E1B16" stroke-width="3"/>
+      <ellipse cx="98" cy="60" rx="13" ry="15" fill="#fff" stroke="#1E1B16" stroke-width="3"/>
+      <circle cx="64" cy="63" r="6.5" fill="#1E1B16"/>
+      <circle cx="100" cy="63" r="6.5" fill="#1E1B16"/>
+      <ellipse cx="44" cy="78" rx="9" ry="5.5" fill="#FF5C7A" opacity=".8"/>
+      <ellipse cx="116" cy="78" rx="9" ry="5.5" fill="#FF5C7A" opacity=".8"/>
+      <path d="M71 80 q9 8 18 0" stroke="#1E1B16" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <!-- wordmark -->
+  <div style="position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 2px 20px 0;">
+    <div style="font-family: 'Archivo Black', Arial Black, sans-serif; font-size: 41px; line-height: .96; letter-spacing: -1.6px; text-transform: uppercase; color: #1E1B16; text-align: center;">Blocktopus</div>
+    <div class="ink" style="background: #2B5CE6; color: #F2ECDD; padding: 4px 13px; font-size: 10.5px; font-weight: 900; letter-spacing: 2.6px; text-transform: uppercase;">Block puzzle</div>
+  </div>
+
+  <!-- progress -->
+  <div class="ink stamp" style="position: relative; margin: 26px 22px 0; padding: 14px 16px; background: #FFF8EA; display: flex; flex-direction: column; gap: 10px;">
+    <div style="display: flex; align-items: baseline; justify-content: space-between;">
+      <span style="font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">Ch.2 &mdash; Kelp Forest</span>
+      <span style="font-size: 12px; font-weight: 700; color: #6B6353;">102 / 2000</span>
+    </div>
+    <div style="height: 12px; border: 2.5px solid #1E1B16; background: #F2ECDD;">
+      <div style="width: 38%; height: 100%; background: repeating-linear-gradient(45deg, #FF5C7A 0 6px, #E03E5C 6px 12px);"></div>
+    </div>
+  </div>
+
+  <!-- actions -->
+  <div style="position: relative; display: flex; flex-direction: column; gap: 13px; padding: 22px 22px 0;">
+    <button class="ink stamp" style="height: 62px; background: #FFCB3D; color: #1E1B16; font-family: 'Archivo Black', Arial Black, sans-serif; font-size: 19px; letter-spacing: -.3px; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="#1E1B16"><path d="M8 5.5v13l11-6.5-11-6.5z"/></svg>
+      Continue
+    </button>
+    <div style="display: flex; gap: 13px;">
+      <button class="ink stamp" style="flex: 1; height: 52px; background: #FFF8EA; color: #1E1B16; font-family: Chivo, sans-serif; font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: .6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E1B16" stroke-width="2.4" stroke-linejoin="round"><path d="M9 4L3 7v13l6-3 6 3 6-3V4l-6 3-6-3z"/></svg>
+        Levels
+      </button>
+      <button class="ink stamp" style="flex: 1; height: 52px; background: #FFF8EA; color: #1E1B16; font-family: Chivo, sans-serif; font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: .6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E1B16" stroke-width="2.4" stroke-linecap="round"><path d="M6 4h12v6a6 6 0 01-12 0V4zM9 20h6M12 16v4"/></svg>
+        Ranks
+      </button>
+    </div>
+  </div>
+
+  <div style="flex: 1;"></div>
+
+  <div style="position: relative; margin: 0 22px 18px; height: 52px; border: 2.5px dashed #B8AF9A; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; letter-spacing: 2.2px; text-transform: uppercase; color: #9A907A;">Banner</div>
+</div>
+</x-dc>
+</body>
+</html>

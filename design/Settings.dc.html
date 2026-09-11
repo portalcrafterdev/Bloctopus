@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #FF6B5E; } a:hover { color: #E2493C; }
+    .dc-root { font-family: Nunito, "Helvetica Neue", Arial, sans-serif; }
+    .sticker { border: 3px solid #FFFFFF; box-shadow: 0 6px 0 rgba(3,60,92,.28), 0 12px 22px -8px rgba(3,60,92,.5); }
+    .card { border-radius: 22px; background: rgba(255,255,255,.18); border: 2px solid rgba(255,255,255,.35); padding: 3px 16px; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 52px; }
+    .lbl { font-size: 14.5px; font-weight: 900; }
+    .sub { font-size: 11.5px; font-weight: 700; color: rgba(255,255,255,.7); margin-top: 2px; }
+    .sw-on { width: 50px; height: 30px; border-radius: 999px; background: linear-gradient(180deg, #FFDE63, #FFAE1F); border: 2.5px solid #fff; position: relative; }
+    .sw-on::after { content: ""; position: absolute; right: 3px; top: 3px; width: 19px; height: 19px; border-radius: 50%; background: #7A4A00; }
+    .sw-off { width: 50px; height: 30px; border-radius: 999px; background: rgba(3,60,92,.3); border: 2.5px solid rgba(255,255,255,.4); position: relative; }
+    .sw-off::after { content: ""; position: absolute; left: 3px; top: 3px; width: 19px; height: 19px; border-radius: 50%; background: rgba(255,255,255,.65); }
+    .div { height: 2px; background: rgba(255,255,255,.18); }
+  </style>
+</helmet>
+
+<div class="dc-root" style="width: 390px; height: 844px; overflow: hidden; position: relative; background: linear-gradient(180deg, #26E0CE 0%, #12B5D6 44%, #0B74C4 100%); color: #fff; display: flex; flex-direction: column;">
+
+  <div style="position: absolute; inset: 0; pointer-events: none; overflow: hidden;">
+    <div style="position: absolute; left: -40px; top: -130px; width: 200px; height: 430px; background: rgba(255,255,255,.12); transform: rotate(18deg); filter: blur(2px);"></div>
+  </div>
+
+  <!-- header -->
+  <div style="position: relative; display: flex; align-items: center; gap: 13px; padding: 20px 18px 16px;">
+    <button class="sticker" style="width: 42px; height: 42px; border-radius: 15px; background: rgba(255,255,255,.22); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <div style="font-family: Fredoka, sans-serif; font-weight: 700; font-size: 21px; letter-spacing: -.2px;">Settings</div>
+  </div>
+
+  <!-- stats strip -->
+  <div class="sticker" style="position: relative; margin: 0 18px; display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); padding: 15px 0; border-radius: 22px; background: rgba(255,255,255,.2);">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+      <b style="font-family: Fredoka, sans-serif; font-weight: 700; font-size: 22px;">101</b>
+      <span style="font-size: 10px; font-weight: 900; letter-spacing: 1.4px; text-transform: uppercase; color: rgba(255,255,255,.75);">Levels</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 2px; border-left: 2px solid rgba(255,255,255,.25); border-right: 2px solid rgba(255,255,255,.25);">
+      <b style="font-family: Fredoka, sans-serif; font-weight: 700; font-size: 22px; color: #FFE79A;">148</b>
+      <span style="font-size: 10px; font-weight: 900; letter-spacing: 1.4px; text-transform: uppercase; color: rgba(255,255,255,.75);">Stars</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+      <b style="font-family: Fredoka, sans-serif; font-weight: 700; font-size: 22px;">128k</b>
+      <span style="font-size: 10px; font-weight: 900; letter-spacing: 1.4px; text-transform: uppercase; color: rgba(255,255,255,.75);">Score</span>
+    </div>
+  </div>
+
+  <!-- audio -->
+  <div style="position: relative; padding: 20px 18px 0;">
+    <div style="font-size: 10px; font-weight: 900; letter-spacing: 2.4px; text-transform: uppercase; color: #FFE79A; padding-left: 5px; margin-bottom: 8px;">Audio</div>
+    <div class="card">
+      <div class="row"><div class="lbl">Sound effects</div><div class="sw-on"></div></div>
+      <div class="div"></div>
+      <div class="row" style="padding: 13px 0;">
+        <div class="lbl" style="white-space: nowrap; font-size: 13px;">Effects</div>
+        <div style="flex: 1; height: 9px; border-radius: 999px; background: rgba(3,60,92,.3); position: relative;">
+          <div style="width: 82%; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #FFD23F, #FF9F1C);"></div>
+          <div style="position: absolute; left: 82%; top: 50%; transform: translate(-50%,-50%); width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 3px 0 rgba(3,60,92,.3);"></div>
+        </div>
+      </div>
+      <div class="div"></div>
+      <div class="row"><div class="lbl">Music</div><div class="sw-on"></div></div>
+      <div class="div"></div>
+      <div class="row" style="padding: 13px 0;">
+        <div class="lbl" style="white-space: nowrap; font-size: 13px;">Music</div>
+        <div style="flex: 1; height: 9px; border-radius: 999px; background: rgba(3,60,92,.3); position: relative;">
+          <div style="width: 56%; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #FFD23F, #FF9F1C);"></div>
+          <div style="position: absolute; left: 56%; top: 50%; transform: translate(-50%,-50%); width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 3px 0 rgba(3,60,92,.3);"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- feel -->
+  <div style="position: relative; padding: 18px 18px 0;">
+    <div style="font-size: 10px; font-weight: 900; letter-spacing: 2.4px; text-transform: uppercase; color: #FFE79A; padding-left: 5px; margin-bottom: 8px;">Feel</div>
+    <div class="card">
+      <div class="row"><div class="lbl">Haptics</div><div class="sw-on"></div></div>
+      <div class="div"></div>
+      <div class="row" style="padding: 10px 0;">
+        <div>
+          <div class="lbl">Reduce motion</div>
+          <div class="sub">Turns off screen shake and halves the particles.</div>
+        </div>
+        <div class="sw-off"></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex: 1;"></div>
+
+  <!-- danger -->
+  <div style="position: relative; padding: 0 18px 24px;">
+    <button style="width: 100%; height: 54px; border-radius: 18px; cursor: pointer; background: rgba(255,107,94,.22); border: 3px solid #FF6B5E; color: #fff; font-family: Fredoka, sans-serif; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 9px;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg>
+      Reset progress
+    </button>
+    <div style="text-align: center; font-size: 11px; font-weight: 800; color: rgba(255,255,255,.55); margin-top: 12px;">Blocktopus 1.0.0</div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -35,12 +35,15 @@ flutter:
     - assets/levels/
     - assets/audio/
 
-  # Bagel Fat One, by Kyung-won Baek. SIL Open Font License, so it ships with
-  # the game; the licence is in assets/fonts/BagelFatOne-OFL.txt and the
-  # provenance in NOTICE.txt beside it. Used app wide - see kDisplayFont in
-  # theme.dart. The file is 1.6 MB because it carries a full Hangul set the
-  # game never draws; subsetting it to Latin would reclaim most of that.
+  # Fredoka (display) and Nunito (body), both SIL Open Font License; the
+  # licences are in assets/fonts/ beside them and the provenance in
+  # NOTICE.txt. Both are variable fonts: one file per family carrying a whole
+  # weight axis, which is why each is declared once with no per-weight assets.
+  # See kDisplayFont in theme.dart for how the axis is selected.
   fonts:
-    - family: BagelFatOne
+    - family: Fredoka
       fonts:
-        - asset: assets/fonts/BagelFatOne-Regular.ttf
+        - asset: assets/fonts/Fredoka-Variable.ttf
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-Variable.ttf

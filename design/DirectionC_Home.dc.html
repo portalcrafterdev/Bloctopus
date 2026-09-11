@@ -1,0 +1,108 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #FF6B5E; } a:hover { content: ""; color: #E2493C; }
+    .dc-root { font-family: Nunito, "Helvetica Neue", Arial, sans-serif; }
+    .sticker { border: 3px solid #FFFFFF; box-shadow: 0 6px 0 rgba(3,60,92,.28), 0 12px 22px -8px rgba(3,60,92,.5); }
+  </style>
+</helmet>
+
+<div class="dc-root" style="width: 390px; height: 844px; overflow: hidden; position: relative; background: linear-gradient(180deg, #26E0CE 0%, #12B5D6 42%, #0B74C4 100%); color: #FFFFFF; display: flex; flex-direction: column;">
+
+  <!-- sun rays + bubbles -->
+  <div style="position: absolute; inset: 0; pointer-events: none; overflow: hidden;">
+    <div style="position: absolute; left: -40px; top: -120px; width: 200px; height: 420px; background: rgba(255,255,255,.14); transform: rotate(18deg); filter: blur(2px);"></div>
+    <div style="position: absolute; left: 180px; top: -140px; width: 110px; height: 400px; background: rgba(255,255,255,.1); transform: rotate(18deg); filter: blur(2px);"></div>
+    <div style="position: absolute; left: 46px; top: 330px; width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,.4);"></div>
+    <div style="position: absolute; left: 330px; top: 265px; width: 9px; height: 9px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,.35);"></div>
+    <div style="position: absolute; left: 300px; top: 420px; width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,.3);"></div>
+  </div>
+
+  <!-- top bar -->
+  <div style="position: relative; display: flex; align-items: center; justify-content: space-between; padding: 22px 20px 0;">
+    <div class="sticker" style="display: flex; align-items: center; gap: 7px; padding: 6px 13px; border-radius: 999px; background: #FFD23F; color: #7A4A00;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="#7A4A00"><path d="M12 3l2.7 5.9 6.3.7-4.7 4.3 1.3 6.2L12 17l-5.6 3.1 1.3-6.2L3 9.6l6.3-.7L12 3z"/></svg>
+      <span style="font-size: 14px; font-weight: 900;">148</span>
+    </div>
+    <button class="sticker" style="width: 42px; height: 42px; border-radius: 15px; background: rgba(255,255,255,.22); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg>
+    </button>
+  </div>
+
+  <!-- mascot on a bubble -->
+  <div style="position: relative; display: flex; justify-content: center; padding: 22px 0 0;">
+    <div style="position: relative; width: 178px; height: 178px; border-radius: 50%; background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.34), rgba(255,255,255,.08) 62%, rgba(255,255,255,0) 70%); display: flex; align-items: center; justify-content: center;">
+      <svg viewBox="0 0 150 140" width="150" height="140">
+        <g stroke="#8B5CF0" stroke-width="14" stroke-linecap="round" fill="none">
+          <path d="M32 84 C25 104 27 118 33 128"/>
+          <path d="M52 92 C48 112 49 124 54 133"/>
+          <path d="M75 95 C75 114 75 125 75 134"/>
+          <path d="M98 92 C102 112 101 124 96 133"/>
+          <path d="M118 84 C125 104 123 118 117 128"/>
+        </g>
+        <ellipse cx="75" cy="57" rx="53" ry="48" fill="#8B5CF0"/>
+        <ellipse cx="75" cy="40" rx="43" ry="29" fill="#B47CF5" opacity=".55"/>
+        <ellipse cx="57" cy="57" rx="13" ry="14.5" fill="#fff"/>
+        <ellipse cx="93" cy="57" rx="13" ry="14.5" fill="#fff"/>
+        <circle cx="59" cy="60" r="6.6" fill="#123A52"/>
+        <circle cx="95" cy="60" r="6.6" fill="#123A52"/>
+        <circle cx="56.5" cy="56" r="2.3" fill="#fff"/>
+        <circle cx="92.5" cy="56" r="2.3" fill="#fff"/>
+        <ellipse cx="42" cy="74" rx="8.5" ry="5.5" fill="#FF9AC1" opacity=".7"/>
+        <ellipse cx="108" cy="74" rx="8.5" ry="5.5" fill="#FF9AC1" opacity=".7"/>
+        <path d="M67 75 q8 8 16 0" stroke="#123A52" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- wordmark -->
+  <div style="position: relative; display: flex; flex-direction: column; align-items: center; gap: 9px; margin-top: -6px;">
+    <div style="font-family: Fredoka, sans-serif; font-weight: 700; font-size: 43px; line-height: 1; letter-spacing: -.5px; color: #fff; text-shadow: 0 4px 0 rgba(3,60,92,.35);">Blocktopus</div>
+    <div class="sticker" style="padding: 4px 14px; border-radius: 999px; background: #FF6B5E; font-family: Nunito, sans-serif; font-size: 10.5px; font-weight: 900; letter-spacing: 2.4px; text-transform: uppercase;">Block puzzle</div>
+  </div>
+
+  <!-- progress -->
+  <div style="position: relative; margin: 24px 22px 0; padding: 14px 16px; border-radius: 20px; background: rgba(255,255,255,.18); border: 2px solid rgba(255,255,255,.35); display: flex; flex-direction: column; gap: 10px;">
+    <div style="display: flex; align-items: baseline; justify-content: space-between;">
+      <span style="font-size: 13px; font-weight: 900;">Chapter 2 &middot; Kelp Forest</span>
+      <span style="font-size: 12px; font-weight: 800; color: rgba(255,255,255,.8);">102 / 2000</span>
+    </div>
+    <div style="height: 10px; border-radius: 999px; background: rgba(3,60,92,.3); overflow: hidden;">
+      <div style="width: 38%; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #FFD23F, #FF9F1C);"></div>
+    </div>
+  </div>
+
+  <!-- actions -->
+  <div style="position: relative; display: flex; flex-direction: column; gap: 14px; padding: 22px 22px 0;">
+    <button class="sticker" style="height: 64px; border-radius: 22px; background: linear-gradient(180deg, #FFDE63, #FFAE1F); color: #7A4A00; font-family: Fredoka, sans-serif; font-weight: 700; font-size: 21px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="#7A4A00"><path d="M8 5.5v13l11-6.5-11-6.5z"/></svg>
+      Continue
+    </button>
+    <div style="display: flex; gap: 14px;">
+      <button class="sticker" style="flex: 1; height: 54px; border-radius: 18px; background: rgba(255,255,255,.22); color: #fff; font-family: Fredoka, sans-serif; font-weight: 600; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"><path d="M9 4L3 7v13l6-3 6 3 6-3V4l-6 3-6-3z"/></svg>
+        Levels
+      </button>
+      <button class="sticker" style="flex: 1; height: 54px; border-radius: 18px; background: rgba(255,255,255,.22); color: #fff; font-family: Fredoka, sans-serif; font-weight: 600; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M6 4h12v6a6 6 0 01-12 0V4zM9 20h6M12 16v4"/></svg>
+        Ranks
+      </button>
+    </div>
+  </div>
+
+  <div style="flex: 1;"></div>
+
+  <div style="position: relative; margin: 0 22px 18px; height: 52px; border-radius: 16px; border: 2.5px dashed rgba(255,255,255,.42); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; letter-spacing: 2.2px; text-transform: uppercase; color: rgba(255,255,255,.72);">Banner</div>
+</div>
+</x-dc>
+</body>
+</html>
