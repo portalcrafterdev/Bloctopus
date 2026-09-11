@@ -13,12 +13,12 @@ import 'dart:io';
 import 'dart:typed_data';
 
 // Colours from section 3.
-const int _bg = 0xFF062F35;
-const int _inkTeal = 0xFF0FA9A0;
-const int _inkTealHi = 0xFF62E4D8;
-const int _inkTealAccent = 0xFFA2FFF5;
+const int _bg = 0xFF141026;
+const int _inkPurple = 0xFF8B5CF0;
+const int _inkPurpleHi = 0xFFB47CF5;
+const int _inkPink = 0xFFFF9AC1;
 const int _eyeWhite = 0xFFFFFFFF;
-const int _pupil = 0xFF062A30;
+const int _pupil = 0xFF241C42;
 
 /// Supersampling factor. The icon is drawn this much larger and box filtered
 /// down, which is all the antialiasing a flat shape needs.
@@ -146,17 +146,11 @@ Canvas32 drawIcon(int size) {
       u(0.265),
       u(0.049),
       u(0.049),
-      _inkTeal,
+      _inkPurple,
     );
   }
   for (final x in armX) {
-    c.ellipse(
-      u(x),
-      u(0.805),
-      u(0.019),
-      u(0.019),
-      _withAlpha(_inkTealAccent, 0.85),
-    );
+    c.ellipse(u(x), u(0.805), u(0.019), u(0.019), _withAlpha(_inkPink, 0.85));
   }
 
   // Head: roughly 1.15 wide to 1.0 tall.
@@ -171,29 +165,23 @@ Canvas32 drawIcon(int size) {
     u(headH),
     u(headW / 2),
     u(headW * 0.34),
-    _inkTeal,
+    _inkPurple,
   );
 
   // Highlight across the upper third. Kept well inside the head outline: the
   // top corner radius is headW / 2, so anything wider than about 0.20 pokes
   // out of the dome and reads as a halo.
-  c.ellipse(u(0.5), u(0.325), u(0.20), u(0.105), _withAlpha(_inkTealHi, 0.62));
+  c.ellipse(
+    u(0.5),
+    u(0.325),
+    u(0.20),
+    u(0.105),
+    _withAlpha(_inkPurpleHi, 0.62),
+  );
 
   // Cheeks.
-  c.ellipse(
-    u(0.30),
-    u(0.485),
-    u(0.052),
-    u(0.032),
-    _withAlpha(_inkTealAccent, 0.4),
-  );
-  c.ellipse(
-    u(0.70),
-    u(0.485),
-    u(0.052),
-    u(0.032),
-    _withAlpha(_inkTealAccent, 0.4),
-  );
+  c.ellipse(u(0.30), u(0.485), u(0.052), u(0.032), _withAlpha(_inkPink, 0.4));
+  c.ellipse(u(0.70), u(0.485), u(0.052), u(0.032), _withAlpha(_inkPink, 0.4));
 
   // Eyes.
   for (final ex in <double>[0.395, 0.605]) {

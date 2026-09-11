@@ -19,28 +19,6 @@ class AchievementProgress {
   bool get isEmpty => unlock.isEmpty && steps.isEmpty;
 }
 
-/// The incremental achievement the player is closest to finishing, with how
-/// far along it is.
-///
-/// Drives the home screen's one achievement row. Incremental only: a standard
-/// achievement is all or nothing, so "closest" means nothing for it. Returns
-/// null when every incremental one is already at its target, which is the
-/// honest empty state - a row claiming progress on a finished goal would be
-/// worse than no row.
-({GameAchievement achievement, int value})? nearestAchievement(SaveData save) {
-  ({GameAchievement achievement, int value})? best;
-  var bestRatio = -1.0;
-  achievementProgress(save).steps.forEach((a, value) {
-    if (value >= a.steps) return;
-    final ratio = value / a.steps;
-    if (ratio > bestRatio) {
-      bestRatio = ratio;
-      best = (achievement: a, value: value);
-    }
-  });
-  return best;
-}
-
 /// Reads the save and decides what has been earned.
 ///
 /// Pure on purpose, so every threshold can be tested on both sides of its

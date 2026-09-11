@@ -1,15 +1,11 @@
-Fredoka-Variable.ttf
-Fredoka, by Milena Brandao and Hafontia. Variable (wdth, wght).
+BagelFatOne-Regular.ttf
+Bagel Fat One, designed by Kyung-won Baek. Version 1.000.
 
-Nunito-Variable.ttf
-Nunito, by Vernon Adams, Cyreal and Jacques Le Bailly. Variable (wght).
-
-Both licensed under the SIL Open Font License, Version 1.1. The full licence
-texts are in Fredoka-OFL.txt and Nunito-OFL.txt beside this file.
+Licensed under the SIL Open Font License, Version 1.1.
+The full licence text is in BagelFatOne-OFL.txt beside this file.
 
 Obtained from the Google Fonts project:
-https://github.com/google/fonts/tree/main/ofl/fredoka
-https://github.com/google/fonts/tree/main/ofl/nunito
+https://github.com/google/fonts/tree/main/ofl/bagelfatone
 
 The OFL permits use, modification and redistribution, including bundled
 inside a commercial application, provided the licence accompanies the font
