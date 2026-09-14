@@ -42,6 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onSaveChanged() {
+    _onProgressChanged();
     if (mounted) setState(() {});
   }
 
@@ -54,7 +55,26 @@ class _HomeScreenState extends State<HomeScreen> {
   /// feature exists for. A hook on the button would miss it.
   void _onPlayerChanged() {
     if (!GamesService.instance.signedIn) return;
-    unawaited(GamesService.instance.syncSave(widget.save));
+    unawaited(_syncThenRank());
+  }
+
+  /// In that order, because the rank is a reading of what was just submitted.
+  ///
+  /// Asking for the position before pushing the score returns the position the
+  /// player held before this session, which on a device that has just restored
+  /// its progress is the wrong number and looks like a stale one.
+  Future<void> _syncThenRank() async {
+    await GamesService.instance.syncSave(widget.save);
+    await GamesService.instance.refreshRank();
+  }
+
+  /// The save changing means a level was finished, which is the only thing
+  /// that moves the board. [GamesService.refreshRank] drops a second call
+  /// while one is already running, so a burst cannot stack up network calls.
+  void _onProgressChanged() {
+    if (GamesService.instance.signedIn) {
+      unawaited(GamesService.instance.refreshRank());
+    }
   }
 
   @override
@@ -319,14 +339,30 @@ class _HomeScreenState extends State<HomeScreen> {
   /// of dim text - "46 levels, 92 stars" - which is the same information
   /// wearing no clothes.
   Widget _stats(SaveData save, int stars) {
-    return Row(
-      children: [
-        Expanded(child: _tile('${save.levelsCompleted}', 'Cleared')),
-        const SizedBox(width: 10),
-        Expanded(child: _tile('$stars', 'Stars')),
-        const SizedBox(width: 10),
-        Expanded(child: _tile(_short(save.totalScore), 'Score')),
-      ],
+    // The first three read off the save and are always true. The fourth comes
+    // off the account, and appears only when there is genuinely a position to
+    // show - see [GamesService.rank], where null is the ordinary state and
+    // covers signed out, offline, and "no score on the board yet", which is
+    // everyone until their first level lands.
+    //
+    // Deliberately not a placeholder. A dash or a zero in a row of real
+    // numbers reads as a rank of nothing rather than as an absent rank, and
+    // the row is better three wide than four wide with one of them lying.
+    return ValueListenableBuilder<int?>(
+      valueListenable: GamesService.instance.rank,
+      builder: (context, rank, _) => Row(
+        children: [
+          Expanded(child: _tile('${save.levelsCompleted}', 'Cleared')),
+          const SizedBox(width: 10),
+          Expanded(child: _tile('$stars', 'Stars')),
+          const SizedBox(width: 10),
+          Expanded(child: _tile(_short(save.totalScore), 'Score')),
+          if (rank != null) ...[
+            const SizedBox(width: 10),
+            Expanded(child: _tile('#${_short(rank)}', 'Rank')),
+          ],
+        ],
+      ),
     );
   }
 
@@ -335,7 +371,13 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
       child: Column(
         children: [
-          Text(value, style: T.heading.copyWith(fontSize: 19)),
+          // Shrinks rather than overflows. Three tiles across 300pt left each
+          // number 84pt to play with; a fourth cuts that to 67, and "#1204"
+          // in a display face does not fit it at 19pt.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(value, style: T.heading.copyWith(fontSize: 19)),
+          ),
           const SizedBox(height: 1),
           Text(
             label,

@@ -93,7 +93,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: Center(child: SizedBox(width: 320, child: GameSignInButton(save: SaveData()))),
+          body: Center(
+            child: SizedBox(
+              width: 320,
+              child: GameSignInButton(save: SaveData()),
+            ),
+          ),
         ),
       ),
     );
@@ -112,7 +117,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: Center(child: SizedBox(width: 320, child: GameSignInButton(save: SaveData()))),
+          body: Center(
+            child: SizedBox(
+              width: 320,
+              child: GameSignInButton(save: SaveData()),
+            ),
+          ),
         ),
       ),
     );
@@ -225,6 +235,68 @@ void main() {
     });
   });
 
+  group('a pull that fails is not an empty account', () {
+    setUp(
+      () =>
+          GamesService.instance.player.value = const GamesPlayer(name: 'Reef'),
+    );
+
+    test(
+      'a fresh save is never pushed over a snapshot we could not read',
+      () async {
+        // The exact shape of losing everything: a phone whose data was just
+        // cleared, an owner signing in to get their progress back, and a pull
+        // that fails for a moment. The plugin reports "no snapshot yet" and "the
+        // network is down" identically, so a failed pull used to mean the merge
+        // had no cloud side and a level 1 save went up over the real one.
+        var pushed = false;
+        GamesService.instance
+          ..debugLoadSnapshot = (() async => throw Exception('offline'))
+          ..debugSaveSnapshot = ((_) async => pushed = true);
+
+        final ok = await GamesService.instance.syncSave(SaveData());
+
+        expect(
+          pushed,
+          isFalse,
+          reason: 'overwrote the account with a new save',
+        );
+        expect(ok, isFalse);
+      },
+    );
+
+    test('a save with progress in it still pushes', () async {
+      // The guard must be narrow. A player who has actually played has
+      // something worth storing, and a first ever push necessarily follows a
+      // pull that found nothing.
+      String? cloud;
+      GamesService.instance
+        ..debugLoadSnapshot = (() async => throw Exception('offline'))
+        ..debugSaveSnapshot = ((data) async => cloud = data);
+
+      final ok = await GamesService.instance.syncSave(
+        SaveData(currentLevel: 10, levelsCompleted: 9),
+      );
+
+      expect(ok, isTrue);
+      expect(jsonDecode(cloud!)['currentLevel'], 10);
+    });
+
+    test('a first push on a genuinely empty account still happens', () async {
+      // Pull succeeds and finds nothing - the ordinary first run. Nothing is
+      // at risk, so the guard must not fire.
+      String? cloud;
+      GamesService.instance
+        ..debugLoadSnapshot = (() async => null)
+        ..debugSaveSnapshot = ((data) async => cloud = data);
+
+      final ok = await GamesService.instance.syncSave(SaveData());
+
+      expect(ok, isTrue);
+      expect(cloud, isNotNull);
+    });
+  });
+
   test('a reset leaves nothing of the old run behind', () async {
     // Also the settings screen's reset. `unaidedCompletions` was missed here
     // until the logout work needed the same method, which let a reset player
@@ -253,7 +325,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: Center(child: SizedBox(width: 320, child: GameSignInButton(save: SaveData()))),
+          body: Center(
+            child: SizedBox(
+              width: 320,
+              child: GameSignInButton(save: SaveData()),
+            ),
+          ),
         ),
       ),
     );

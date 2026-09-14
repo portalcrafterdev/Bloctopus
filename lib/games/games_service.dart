@@ -9,6 +9,7 @@ import '../models/save_data.dart';
 
 import 'achievements.dart';
 import 'games_ids.dart';
+import 'games_trace.dart';
 import 'save_merge.dart';
 
 /// The signed in player, in terms this app owns.
@@ -111,6 +112,10 @@ class GamesService {
     _unlocked.clear();
     _lastSteps.clear();
     player.value = null;
+    // The rank belonged to the account, not to the device. Leaving it on
+    // screen after the account has gone would be the one number up there that
+    // no longer refers to anything.
+    rank.value = null;
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_optOutKey, true);
@@ -317,6 +322,66 @@ class GamesService {
     }
   }
 
+  /// The player's place on the headline board, or null when there isn't one.
+  ///
+  /// Null is the normal state, not an error state, and it covers every case
+  /// the home screen must not show a number for: signed out, no board on this
+  /// platform, offline, or - most often of all - signed in with no score on
+  /// the board yet, which is everyone until they finish their first level.
+  final ValueNotifier<int?> rank = ValueNotifier<int?>(null);
+
+  /// The board [rank] reports. Total score, because it is the one that moves
+  /// on every clear: a board that only moves on a first completion leaves a
+  /// replaying player looking at a number that never changes.
+  static const GameLeaderboard _rankBoard = GameLeaderboard.totalScore;
+
+  bool _loadingRank = false;
+
+  @visibleForTesting
+  Future<int?> Function()? debugLoadRank;
+
+  /// Fetches the player's position and publishes it on [rank].
+  ///
+  /// Called when a player appears and after their progress is submitted, which
+  /// is the only time the number can have moved. Silent like the rest of this
+  /// class: a rank that cannot be read is simply not shown.
+  Future<void> refreshRank() async {
+    if (debugDisabled || !signedIn || !_rankBoard.available) {
+      rank.value = null;
+      return;
+    }
+    if (_loadingRank) return;
+    _loadingRank = true;
+    try {
+      final fake = debugLoadRank;
+      final int? raw;
+      if (fake != null) {
+        raw = await fake();
+      } else {
+        final data = await Leaderboards.getPlayerScoreObject(
+          androidLeaderboardID: _rankBoard.androidId,
+          iOSLeaderboardID: _rankBoard.iosId,
+          scope: PlayerScope.global,
+          timeScope: TimeScope.allTime,
+        );
+        raw = data?.rank;
+      }
+      // Ranks are one based, so zero or less is "no placing", not first. The
+      // test seam goes through this too rather than round it: a seam that
+      // skips the only rule in the method cannot test the method.
+      rank.value = (raw != null && raw > 0) ? raw : null;
+    } catch (_) {
+      // A player with no score on the board yet is the common path here, and
+      // it arrives as a thrown FormatException rather than a null: the plugin
+      // hands the platform's empty response straight to `json.decode`. Offline
+      // and board-not-published land in the same place. None of them are worth
+      // distinguishing - all three mean "no number to show".
+      rank.value = null;
+    } finally {
+      _loadingRank = false;
+    }
+  }
+
   /// Opens the platform's leaderboard screen. Returns whether it opened.
   ///
   /// Deliberately passes no id, which both platforms read as "show the list".
@@ -381,15 +446,22 @@ class GamesService {
   /// Silent, like everything else here. A player who is not signed in, or is
   /// offline, or whose console has saved games switched off, keeps playing
   /// against local storage and never learns any of those words.
-  /// TEMPORARY. Prints what the sync did, so it can be watched over logcat
-  /// while the feature is being proved on a device. Remove once it is trusted:
-  /// the sync is silent on purpose, and a player's progress is not something
-  /// to narrate into the system log.
-  static const bool _traceSync = true;
+  /// Prints what the sync did, so it can be watched over logcat while the
+  /// feature is being proved on a device. Off unless asked for, and declared
+  /// in `games_trace.dart` rather than here - see that file for why.
+  static const bool _traceSync = kTraceCloudSave;
 
   void _trace(String message) {
     if (_traceSync) debugPrint('[cloudsave] $message');
   }
+
+  /// Whether a save holds nothing worth pushing: a player who has finished no
+  /// levels and is still on the first one. Read off the json rather than the
+  /// object so it measures exactly what would be uploaded.
+  static bool _isFresh(Map<String, dynamic> save) =>
+      (save['levelsCompleted'] as int? ?? 0) <= 0 &&
+      (save['currentLevel'] as int? ?? 1) <= 1 &&
+      (save['totalScore'] as int? ?? 0) <= 0;
 
   /// Returns true only when the account's copy is known to hold the merged
   /// progress. Most callers fire this and forget it, but disconnecting has to
@@ -403,6 +475,7 @@ class GamesService {
       _trace('start: local level ${local['currentLevel']}');
 
       Map<String, dynamic>? cloud;
+      var pullFailed = false;
       try {
         final raw = await _loadSnapshot();
         if (raw != null && raw.isNotEmpty) {
@@ -417,9 +490,24 @@ class GamesService {
       } catch (e) {
         _trace('pull FAILED: $e');
         // No snapshot yet is the ordinary first run, and the plugin reports it
-        // the same way it reports a failure. Either way the local save is the
-        // only copy, and pushing it is exactly right.
+        // the same way it reports a failure - so a failure has to be treated
+        // as "the account might hold anything", not as "the account is empty".
+        pullFailed = true;
         cloud = null;
+      }
+
+      // Refuse to push a save with nothing in it over a snapshot we could not
+      // read. This is the one combination that destroys progress: a phone
+      // whose data was just cleared, whose owner signs in expecting their
+      // account to hand it back, and a pull that fails for a moment. Without
+      // this the merge has no cloud side to keep, so a level 1 save goes up
+      // and whatever was there is gone.
+      //
+      // Safe to skip entirely: a save at level 1 has nothing worth storing,
+      // and the next sync after any completed level pushes for real.
+      if (pullFailed && _isFresh(local)) {
+        _trace('push SKIPPED: fresh save, and the account could not be read');
+        return false;
       }
 
       final merged = cloud == null
@@ -456,6 +544,9 @@ class GamesService {
     _unlocked.clear();
     _lastSteps.clear();
     player.value = null;
+    rank.value = null;
+    _loadingRank = false;
+    debugLoadRank = null;
     _optedOut = false;
     debugLoadSnapshot = null;
     debugSaveSnapshot = null;
