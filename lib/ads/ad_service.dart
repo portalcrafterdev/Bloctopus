@@ -33,11 +33,31 @@ class AdService {
 
   /// True while a full screen ad is on top of the app.
   ///
-  /// The game screen pauses its music through the lifecycle observer when an
-  /// ad covers the app, and this stops two ads ever being requested at once.
-  bool _showing = false;
+  /// A notifier rather than a plain flag because the app has to *react* to it,
+  /// not merely check it. Google's `AdActivity` is translucent and fills the
+  /// task, so Android only pauses `MainActivity` rather than stopping it: the
+  /// engine never hears that it is off screen, and the game carries on
+  /// painting - mascot, particles, shake - at sixty frames a second behind an
+  /// ad the player cannot see past. On a low end phone that is two renderers
+  /// and a video decoder on one CPU, and the ad is the one that loses. See
+  /// `main.dart`, which uses this to take the whole game out of the frame loop
+  /// and to quieten the music, and [isShowing], which also stops two ads ever
+  /// being requested at once.
+  final ValueNotifier<bool> _covering = ValueNotifier<bool>(false);
 
-  bool get isShowing => _showing;
+  /// Listenable, not settable: only this class knows when an ad is really up.
+  ValueListenable<bool> get covering => _covering;
+
+  bool get isShowing => _covering.value;
+
+  // Named as the flag it replaced so every call site below still reads as one.
+  bool get _showing => _covering.value;
+  set _showing(bool value) => _covering.value = value;
+
+  /// Stands in for an ad going up, so the app's reaction to one can be tested
+  /// without an SDK behind it.
+  @visibleForTesting
+  void debugSetCovering(bool value) => _covering.value = value;
 
   /// Counts failed loads so a device with no fill, or no network, stops being
   /// asked on a loop. Reset by any success.
@@ -107,7 +127,10 @@ class AdService {
     final pending = _pending;
     _pending = null;
     if (pending != null && !pending.isCompleted) pending.complete(false);
+    // Which of the two was up is not knowable here, and asking for a format
+    // that is already in hand is a no-op, so refill both.
     unawaited(_loadInterstitial());
+    unawaited(_loadRewarded());
   }
 
   /// Shows the interstitial if one is ready, and returns whether it did.
@@ -216,15 +239,22 @@ class AdService {
     _rewarded = null;
     var earned = false;
     final done = Completer<bool>();
+    // Same treatment as the interstitial: a rewarded ad whose callback never
+    // arrives would leave the booster sheet waiting on an answer forever.
+    // Completing it as `false` is the safe direction - the player keeps their
+    // count and nothing is granted for an ad that may not have been watched.
+    _pending = done;
     ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (ad) {
         _showing = false;
+        _pending = null;
         ad.dispose();
         unawaited(_loadRewarded());
         if (!done.isCompleted) done.complete(earned);
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
         _showing = false;
+        _pending = null;
         ad.dispose();
         unawaited(_loadRewarded());
         if (!done.isCompleted) done.complete(false);
@@ -235,9 +265,18 @@ class AdService {
       await ad.show(onUserEarnedReward: (_, _) => earned = true);
     } catch (_) {
       _showing = false;
+      _pending = null;
       if (!done.isCompleted) done.complete(false);
     }
-    return done.future;
+    return done.future.timeout(
+      const Duration(minutes: 2),
+      onTimeout: () {
+        _showing = false;
+        _pending = null;
+        unawaited(_loadRewarded());
+        return false;
+      },
+    );
   }
 
   /// Gives the next rewarded ad a head start.

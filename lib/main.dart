@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'ads/ad_quiet_zone.dart';
 import 'ads/ad_service.dart';
 import 'app/router.dart';
 import 'app/theme.dart';
@@ -92,7 +93,10 @@ class _BlocktopusAppState extends State<BlocktopusApp>
               media.textScaler.scale(1).clamp(0.85, 1.25),
             ),
           ),
-          child: child!,
+          // Holds the whole game still while a full screen ad is over it.
+          // Android reports that to nobody, and the cost of missing it is a
+          // hung looking app - see [AdQuietZone].
+          child: AdQuietZone(child: child!),
         );
       },
     );
