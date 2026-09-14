@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
+import '../game/audio.dart';
 import '../games/games_ids.dart';
 import '../games/games_service.dart';
 import 'chunky_button.dart';
@@ -12,9 +13,11 @@ import 'chunky_button.dart';
 /// The Play Games / Game Center block on the home screen.
 ///
 /// Two states. Signed out it is a single key that signs in. Signed in it
-/// becomes a line naming the player with a key for each place there is to go:
-/// Achievements and Leaderboards. There is no sign out, because neither
-/// platform offers one - see [GamesService].
+/// becomes a line naming the player, a tile for each place there is to go -
+/// Achievements and Leaderboards - and a quiet Disconnect.
+///
+/// Disconnect rather than Sign out, because neither platform lets an app sign
+/// a player out; see [GamesService.disconnect] for what it does instead.
 ///
 /// It is a [ChunkyButton] like the two above it, so it belongs to the screen
 /// rather than sitting on top of it. A flat pill was the correct shape by
@@ -113,15 +116,24 @@ class _GameSignInButtonState extends State<GameSignInButton> {
   /// Each destination only appears when it exists. The same rule the sign in
   /// key already followed: never offer a screen that will not open.
   Widget _signedIn(GamesPlayer player) {
+    // Short labels, full names underneath them.
+    //
+    // "Achievements" and "Leaderboards" do not fit a half-width tile at any
+    // size worth reading: on a 320pt phone the tile is 123pt wide and the
+    // words need about 144. The icons carry the meaning - a trophy and a bar
+    // chart are not ambiguous - and the Semantics label still says the whole
+    // thing, so a screen reader announces the real destination.
     final destinations = <Widget>[
       if (GamesIds.achievementsAvailable)
         _destination(
+          'Awards',
           'Achievements',
           Icons.emoji_events_rounded,
           () => GamesService.instance.showAchievements(),
         ),
       if (GamesIds.leaderboardAvailable)
         _destination(
+          'Ranks',
           'Leaderboards',
           Icons.leaderboard_rounded,
           () => GamesService.instance.showLeaderboard(),
@@ -132,18 +144,26 @@ class _GameSignInButtonState extends State<GameSignInButton> {
       mainAxisSize: MainAxisSize.min,
       children: [
         _identity(player),
-        for (final destination in destinations) ...[
+        if (destinations.isNotEmpty) ...[
           const SizedBox(height: 10),
-          destination,
+          Row(
+            children: [
+              for (final destination in destinations) ...[
+                if (destination != destinations.first)
+                  const SizedBox(width: 10),
+                Expanded(child: destination),
+              ],
+            ],
+          ),
         ],
       ],
     );
   }
 
-  /// The player, stated rather than offered.
+  /// Who you are, and the one thing that can be done about it.
   ///
-  /// Not a button: there is nothing to do with it. Both platforms own sign
-  /// out, so a control here would either do nothing or lie.
+  /// The name itself is not a control - there is nothing to do with it - so
+  /// the Disconnect sits beside it rather than being hidden behind it.
   Widget _identity(GamesPlayer player) => Semantics(
     label: 'Signed in as ${player.name}',
     child: Row(
@@ -159,29 +179,133 @@ class _GameSignInButtonState extends State<GameSignInButton> {
             style: T.dimOnBg,
           ),
         ),
+        const SizedBox(width: 6),
+        _disconnect(),
       ],
     ),
   );
 
-  /// Full width, stacked, like Play and Levels above.
+  /// "Disconnect", not "Sign out".
   ///
-  /// Side by side fitted on paper and truncated on a phone: ChunkyButton
-  /// spends 68 logical pixels of every key on padding, glyph and gap, so at
-  /// half the content width "Achievements" and "Leaderboards" both ellipsed
-  /// to "Achieveme..." and "Leaderboar...". The column already scrolls when
-  /// it runs out of room, so the height these cost is free.
-  Widget _destination(String label, IconData icon, VoidCallback onTap) =>
-      ChunkyButton(
-        label: label,
-        icon: icon,
-        color: _face,
-        labelColor: const Color(0xFF1F1F1F),
-        height: 44,
-        // Below the 15 the sign in key uses, so these stay subordinate to it
-        // and to the two play keys.
-        fontSize: 14,
-        onTap: onTap,
-      );
+  /// The word matters here more than usual. Neither platform lets an app sign
+  /// a player out - the account is the device's - so a key labelled Sign out
+  /// would leave them signed in to Play Games and looking for the bug. This
+  /// does what the game can actually do, and says so.
+  ///
+  /// Small and quiet, beside the name rather than under the two destinations:
+  /// it is the rarest thing on this screen and must not compete with them.
+  Widget _disconnect() => Semantics(
+    button: true,
+    label: 'Disconnect from ${GamesIds.serviceName}',
+    child: GestureDetector(
+      onTap: _confirmDisconnect,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        // Padding rather than a size: the label is 12pt, and a bare 12pt tap
+        // target is below every guideline there is.
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Text(
+          'Disconnect',
+          style: T.dimOnBg.copyWith(
+            fontSize: 12,
+            decoration: TextDecoration.underline,
+            decorationColor: textOnBgDim,
+          ),
+        ),
+      ),
+    ),
+  );
+
+  /// Asked before it happens, because it is not obvious what it costs.
+  ///
+  /// Nothing is deleted either way - the snapshot stays in the account and the
+  /// save stays on the phone - but a player who disconnects stops syncing, and
+  /// finding that out afterwards is how progress gets lost on the *next*
+  /// device. The sheet says the part that matters and nothing else.
+  Future<void> _confirmDisconnect() async {
+    AudioService.instance.play(Sfx.tap, volume: 0.6);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: boardBg,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: const BorderSide(color: border),
+        ),
+        title: const Text('Disconnect?', style: T.title),
+        content: Text(
+          'Progress stops syncing to ${GamesIds.serviceName} on this device. '
+          'Nothing is deleted, and connecting again brings it back.',
+          style: T.body,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel', style: T.label),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(
+              'Disconnect',
+              style: T.label.copyWith(color: ghostInvalid),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await GamesService.instance.disconnect();
+  }
+
+  /// A tile, side by side, matching the booster and stat tiles above.
+  ///
+  /// These were full-width stacked keys, because side by side as *keys* they
+  /// truncated: ChunkyButton spends 68 logical pixels of every key on padding,
+  /// glyph and gap, so at half width "Achievements" and "Leaderboards" both
+  /// ellipsed. The height that bought stopped being free once the home screen
+  /// filled up - the second key fell 44 pixels below the fold on a 390x844
+  /// phone, which is a destination nobody scrolls to find.
+  ///
+  /// A tile has none of that chrome: the glyph sits above the label rather
+  /// than beside it, so the full word fits at half the width. It is also the
+  /// shape the rest of this screen already speaks in.
+  Widget _destination(
+    String label,
+    String destination,
+    IconData icon,
+    VoidCallback onTap,
+  ) => Semantics(
+    button: true,
+    label: destination,
+    child: GestureDetector(
+      onTap: () {
+        AudioService.instance.play(Sfx.tap, volume: 0.6);
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 6),
+        decoration: BoxDecoration(
+          color: boardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: border),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 19, color: textAccent),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: T.label.copyWith(fontSize: 12),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 
   Widget _leading(GamesPlayer? player) {
     if (_busy) {

@@ -3,9 +3,13 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:games_services/games_services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../models/save_data.dart';
 
 import 'achievements.dart';
 import 'games_ids.dart';
+import 'save_merge.dart';
 
 /// The signed in player, in terms this app owns.
 ///
@@ -39,10 +43,15 @@ class GamesPlayer {
 /// play. Every entry point degrades to "not signed in", which is a state the
 /// UI has to handle anyway.
 ///
-/// There is deliberately no sign out. Play Games v2 removed programmatic sign
-/// out, and Game Center never had it - both are properties of the device
-/// account, and the player changes them in the Play Games app or in iOS
-/// Settings. A button that claimed otherwise would do nothing.
+/// There is no sign out, because neither platform has one: Play Games v2
+/// removed programmatic sign out and Game Center never had it. The account
+/// belongs to the device, and only the Play Games app or iOS Settings can
+/// release it.
+///
+/// What there is instead is [disconnect], which does the part the game owns -
+/// forget the player, stop syncing, stop submitting, and stay that way across
+/// launches. The button is worded for what that actually is rather than
+/// borrowing a word the platform will not honour.
 class GamesService {
   GamesService._();
 
@@ -69,6 +78,55 @@ class GamesService {
   @visibleForTesting
   bool debugDisabled = false;
 
+  /// Whether the player has disconnected the game from their account on this
+  /// device. Persisted separately from the save so that wiping progress and
+  /// disconnecting stay independent of each other.
+  static const String _optOutKey = 'blocktopus_games_opt_out';
+
+  bool _optedOut = false;
+
+  bool get optedOut => _optedOut;
+
+  /// Disconnects this device from the account.
+  ///
+  /// Not a sign out, and the button does not call it one. Play Games v2 has no
+  /// programmatic sign out and Game Center never had one - the account belongs
+  /// to the device, and only the Play Games app or iOS Settings can release
+  /// it. What this does is everything the game itself controls: it forgets the
+  /// player, stops syncing progress, stops submitting scores, and does not
+  /// subscribe again on the next launch.
+  ///
+  /// The opt out has to persist. Without it the platform restores the session
+  /// at the next cold start and the player finds themselves connected again,
+  /// which is worse than having no button at all.
+  ///
+  /// Nothing is deleted. The snapshot stays in the account and the local save
+  /// stays on the phone, so connecting again merges them back together.
+  Future<void> disconnect() async {
+    _optedOut = true;
+    await _sub?.cancel();
+    _sub = null;
+    _started = false;
+    _lastSubmitted.clear();
+    _unlocked.clear();
+    _lastSteps.clear();
+    player.value = null;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_optOutKey, true);
+    } catch (_) {
+      // The disconnect still holds for this session; only its memory is lost.
+    }
+  }
+
+  /// Undoes [disconnect], so the sign in key works again after one.
+  Future<void> _clearOptOut() async {
+    _optedOut = false;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_optOutKey);
+    } catch (_) {}
+  }
 
   /// Subscribes to the platform's own view of who is signed in.
   ///
@@ -76,6 +134,15 @@ class GamesService {
   /// answers when the platform is ready, which on a cold start is after the
   /// first frame.
   Future<void> init() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _optedOut = prefs.getBool(_optOutKey) ?? false;
+    } catch (_) {
+      _optedOut = false;
+    }
+    // A player who disconnected stays disconnected across launches. This is
+    // the line that makes the button mean anything.
+    if (_optedOut) return;
     if (_started || debugDisabled || !GamesIds.available) return;
     _started = true;
     try {
@@ -97,6 +164,12 @@ class GamesService {
   /// the stream, which is what the button actually rebuilds on.
   Future<bool> signIn() async {
     if (debugDisabled || !GamesIds.available || _signingIn) return false;
+    // Asking to sign in is the undo for [disconnect]. Without this the opt out
+    // would survive the tap and the key would appear to do nothing.
+    if (_optedOut) {
+      await _clearOptOut();
+      await init();
+    }
     _signingIn = true;
     try {
       // The player is inside a Google or Apple sheet for as long as they want
@@ -261,12 +334,94 @@ class GamesService {
     }
   }
 
+  // -- cloud save -----------------------------------------------------------
+
+  /// The snapshot name. One save slot, not a list: this game has a single
+  /// linear progression, so a player choosing between saves would be choosing
+  /// between two versions of the same thing.
+  ///
+  /// It must never change. Renaming it strands every existing snapshot under
+  /// the old name, and the game would read that as a player with no progress.
+  static const String _snapshot = 'blocktopus_progress';
+
+  /// Whether a sync is in flight, so a level finished while one is running
+  /// does not start a second and race it.
+  bool _syncing = false;
+
+  /// Pulls the account's save, merges it into [save], and pushes the result.
+  ///
+  /// Called when a player signs in and on every level completion. The merge is
+  /// in `save_merge.dart` and is best-of per field, so neither side can lose
+  /// progress - see the note there on why "newest wins" is the wrong rule.
+  ///
+  /// Silent, like everything else here. A player who is not signed in, or is
+  /// offline, or whose console has saved games switched off, keeps playing
+  /// against local storage and never learns any of those words.
+  /// TEMPORARY. Prints what the sync did, so it can be watched over logcat
+  /// while the feature is being proved on a device. Remove once it is trusted:
+  /// the sync is silent on purpose, and a player's progress is not something
+  /// to narrate into the system log.
+  static const bool _traceSync = true;
+
+  void _trace(String message) {
+    if (_traceSync) debugPrint('[cloudsave] $message');
+  }
+
+  Future<void> syncSave(SaveData save) async {
+    if (debugDisabled || !signedIn || _syncing) return;
+    _syncing = true;
+    try {
+      final local = save.toJson();
+      _trace('start: local level ${local['currentLevel']}');
+
+      Map<String, dynamic>? cloud;
+      try {
+        final raw = await GamesServices.loadGame(name: _snapshot);
+        if (raw != null && raw.isNotEmpty) {
+          final decoded = jsonDecode(raw);
+          if (decoded is Map) cloud = decoded.cast<String, dynamic>();
+        }
+        _trace(
+          cloud == null
+              ? 'pull: no snapshot yet'
+              : 'pull: cloud level ${cloud['currentLevel']}, ${cloud['levelsCompleted']} cleared',
+        );
+      } catch (e) {
+        _trace('pull FAILED: $e');
+        // No snapshot yet is the ordinary first run, and the plugin reports it
+        // the same way it reports a failure. Either way the local save is the
+        // only copy, and pushing it is exactly right.
+        cloud = null;
+      }
+
+      final merged = cloud == null
+          ? local
+          : mergeSaveJson(local: local, cloud: cloud);
+
+      // Apply before pushing. If the push fails the player still has the
+      // merged progress on the device, which is the half that matters.
+      if (cloud != null) await save.applyJson(merged);
+
+      try {
+        await GamesServices.saveGame(data: jsonEncode(merged), name: _snapshot);
+        _trace(
+          'push OK: level ${merged['currentLevel']}, ${merged['levelsCompleted']} cleared',
+        );
+      } catch (e) {
+        _trace('push FAILED: $e');
+      }
+    } finally {
+      _syncing = false;
+    }
+  }
+
   @visibleForTesting
   void debugReset() {
     _sub?.cancel();
     _sub = null;
     _started = false;
     _signingIn = false;
+    _syncing = false;
     _lastSubmitted.clear();
     _unlocked.clear();
     _lastSteps.clear();

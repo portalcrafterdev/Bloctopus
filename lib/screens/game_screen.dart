@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -606,9 +606,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         starsEarned: widget.save.totalStars,
       ),
     );
-    unawaited(
-      GamesService.instance.report(achievementProgress(widget.save)),
-    );
+    unawaited(GamesService.instance.report(achievementProgress(widget.save)));
+    // The cloud copy, so this level is on the account and not only on this
+    // phone. Same treatment as the two above: silent, unawaited, and the
+    // result sheet does not wait on a network round trip to appear.
+    unawaited(GamesService.instance.syncSave(widget.save));
 
     final action = await showResultSheet(
       context,

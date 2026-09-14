@@ -114,8 +114,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       onChanged: (v) => _set((s) => s.reduceMotion = v),
                     ),
                     const SizedBox(height: 10),
-                    _Stats(save: widget.save),
-                    const SizedBox(height: 10),
+                    // The same three numbers now sit on the home screen, as
+                    // the Cleared / Stars / Score tiles, which is the screen a
+                    // player actually opens to see how they are doing. Kept
+                    // rather than deleted at the owner's request, so it can go
+                    // back if the home tiles do not stay.
+                    // _Stats(save: widget.save),
+                    // const SizedBox(height: 10),
                     Center(
                       child: TextButton(
                         onPressed: _confirmReset,
@@ -291,6 +296,10 @@ class _Toggle extends StatelessWidget {
   }
 }
 
+/// Parked, not deleted. Its one call site in the column above is commented
+/// out because the home screen now carries these three numbers; the ignore is
+/// what lets it sit here unused without the analyzer reporting it every run.
+// ignore: unused_element
 class _Stats extends StatelessWidget {
   final SaveData save;
 

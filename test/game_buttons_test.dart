@@ -28,8 +28,8 @@ void main() {
     await pump(tester);
 
     expect(find.text('Sign in with ${GamesIds.serviceName}'), findsOneWidget);
-    expect(find.text('Achievements'), findsNothing);
-    expect(find.text('Leaderboards'), findsNothing);
+    expect(find.text('Awards'), findsNothing);
+    expect(find.text('Ranks'), findsNothing);
   });
 
   testWidgets('signed in it names the player and both destinations', (
@@ -46,11 +46,11 @@ void main() {
     // the test runs on the host, so this asserts the rule rather than the
     // platform: a destination is offered exactly when it can open.
     expect(
-      find.text('Achievements'),
+      find.text('Awards'),
       GamesIds.achievementsAvailable ? findsOneWidget : findsNothing,
     );
     expect(
-      find.text('Leaderboards'),
+      find.text('Ranks'),
       GamesIds.leaderboardAvailable ? findsOneWidget : findsNothing,
     );
   });
@@ -62,8 +62,8 @@ void main() {
     if (!GamesIds.achievementsAvailable || !GamesIds.leaderboardAvailable) {
       return;
     }
-    final achievements = tester.getRect(find.text('Achievements'));
-    final leaderboards = tester.getRect(find.text('Leaderboards'));
+    final achievements = tester.getRect(find.text('Awards'));
+    final leaderboards = tester.getRect(find.text('Ranks'));
     expect(
       achievements.overlaps(leaderboards),
       isFalse,
@@ -79,7 +79,7 @@ void main() {
     GamesService.instance.player.value = const GamesPlayer(name: 'Reef');
     await pump(tester);
 
-    for (final label in <String>['Achievements', 'Leaderboards']) {
+    for (final label in <String>['Awards', 'Ranks']) {
       final finder = find.text(label);
       if (finder.evaluate().isEmpty) continue;
       final paragraph = tester.renderObject<RenderParagraph>(finder);

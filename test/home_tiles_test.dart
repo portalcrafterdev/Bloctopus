@@ -83,25 +83,24 @@ void main() {
     }
   });
 
-  testWidgets('the boosters show what the save holds', (tester) async {
+  testWidgets('the booster counts are not repeated here', (tester) async {
+    // They were tiles on this screen for a while and the owner took them out.
+    // The booster bar under the tray already carries these three, where they
+    // are a control rather than a readout, so a second copy on the home screen
+    // was a number with nothing to do.
     await pump(tester, midGame());
     for (final label in <String>['Rewind', 'Ink blast', 'Reshuffle']) {
-      expect(find.text(label), findsOneWidget);
+      expect(find.text(label), findsNothing);
     }
-    expect(find.text('3'), findsOneWidget);
-    expect(find.text('2'), findsOneWidget);
-    expect(find.text('4'), findsOneWidget);
   });
 
   testWidgets('a fresh save keeps the chapter card and drops the stats', (
     tester,
   ) async {
-    // Two of the three modules earn their place before the first level. Three
-    // boosters of each is a thing you already have, and the chapter card says
-    // where you are about to go. The stat tiles do not: three zeroes tell a
+    // The chapter card earns its place before the first level: it says where
+    // the player is about to go. The stat tiles do not - three zeroes tell a
     // new player only that they have done nothing, which they know.
     await pump(tester, SaveData());
-    expect(find.text('Rewind'), findsOneWidget);
     expect(find.text('Chapter 1 · Tide Pools'), findsOneWidget);
     expect(find.byKey(const Key('home-progress')), findsOneWidget);
     expect(find.text('Cleared'), findsNothing);

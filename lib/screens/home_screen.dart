@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
 import '../game/audio.dart';
+import '../games/games_service.dart';
 import '../models/level.dart';
 import '../models/save_data.dart';
 import '../widgets/banner_ad_view.dart';
@@ -33,6 +34,10 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     widget.save.addListener(_onSaveChanged);
+    GamesService.instance.player.addListener(_onPlayerChanged);
+    // Covers a session the platform restored on its own before this screen
+    // existed, which is the usual case on a phone that has signed in before.
+    _onPlayerChanged();
     AudioService.instance.playMusic(Music.menu);
   }
 
@@ -40,9 +45,22 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) setState(() {});
   }
 
+  /// Pulls the account's progress down the moment there is an account.
+  ///
+  /// Listening to the player rather than hanging this off the sign in button
+  /// on purpose. Signing in is not the only way a player arrives here signed
+  /// in: both platforms restore a previous session at launch without asking,
+  /// and a second device installing the game is exactly the case this whole
+  /// feature exists for. A hook on the button would miss it.
+  void _onPlayerChanged() {
+    if (!GamesService.instance.signedIn) return;
+    unawaited(GamesService.instance.syncSave(widget.save));
+  }
+
   @override
   void dispose() {
     widget.save.removeListener(_onSaveChanged);
+    GamesService.instance.player.removeListener(_onPlayerChanged);
     super.dispose();
   }
 
@@ -165,9 +183,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                     size: mascotSize,
                                     state: MascotState.idle,
                                   ),
-                                  const SizedBox(height: 10),
+                                  const SizedBox(height: 8),
                                   const Wordmark(),
-                                  const SizedBox(height: 6),
+                                  const SizedBox(height: 4),
                                   Text(
                                     'Block puzzle',
                                     style: T.label.copyWith(
@@ -176,24 +194,20 @@ class _HomeScreenState extends State<HomeScreen> {
                                       letterSpacing: 2.4,
                                     ),
                                   ),
-                                  const SizedBox(height: 22),
-                                  _width(_chapterCard(save)),
-                                  const SizedBox(height: 14),
-                                  _menu(save, started),
                                   const SizedBox(height: 16),
-                                  if (started) ...[
-                                    _width(_stats(save, stars)),
-                                    const SizedBox(height: 12),
-                                  ],
-                                  _width(_boosters(save)),
-                                  const SizedBox(height: 18),
+                                  _width(_chapterCard(save)),
+                                  const SizedBox(height: 10),
+                                  _menu(save, started),
+                                  const SizedBox(height: 12),
+                                  if (started) _width(_stats(save, stars)),
+                                  const SizedBox(height: 14),
                                   // Under the play keys, not above them. It is
                                   // optional: nothing in the game needs an
                                   // account, and a sign in prompt standing
                                   // between a player and the play button is
                                   // the first thing a one star review mentions.
                                   const GameSignInButton(),
-                                  const SizedBox(height: 20),
+                                  const SizedBox(height: 14),
                                 ],
                               ),
                             ),
@@ -277,14 +291,19 @@ class _HomeScreenState extends State<HomeScreen> {
             key: const Key('home-progress'),
             borderRadius: BorderRadius.circular(5),
             child: Container(
-
               width: double.infinity,
               height: 9,
               color: scrim,
               alignment: Alignment.centerLeft,
 
+              // `heightFactor` is not optional here, whatever it looks like.
+              // Without it the box takes the track's loose height constraint,
+              // a DecoratedBox with no child collapses to nothing, and the
+              // fill draws 13 pixels wide and zero tall - an empty track at
+              // every level in the game. It looked like a design decision.
               child: FractionallySizedBox(
                 widthFactor: t.clamp(0.02, 1),
+                heightFactor: 1,
                 child: const DecoratedBox(
                   decoration: BoxDecoration(color: textAccent),
                 ),
@@ -307,52 +326,6 @@ class _HomeScreenState extends State<HomeScreen> {
         Expanded(child: _tile('$stars', 'Stars')),
         const SizedBox(width: 10),
         Expanded(child: _tile(_short(save.totalScore), 'Score')),
-      ],
-    );
-  }
-
-  /// What the player has in hand. Also the one module that is worth showing on
-  /// a fresh save: three of each is a thing you have, and seeing it before the
-  /// first level is how you learn the boosters exist at all.
-  Widget _boosters(SaveData save) {
-    const icons = <String, IconData>{
-      BoosterId.undo: Icons.undo,
-      BoosterId.hammer: Icons.water_drop_outlined,
-      BoosterId.refresh: Icons.refresh,
-    };
-
-    return Row(
-      children: [
-        for (final id in BoosterId.all) ...[
-          if (id != BoosterId.all.first) const SizedBox(width: 10),
-          Expanded(
-            child: _panel(
-              padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 8),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(icons[id], size: 17, color: textLilac),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${save.boosterCount(id)}',
-                        style: T.heading.copyWith(fontSize: 17),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    BoosterId.label(id),
-                    style: T.dim.copyWith(fontSize: 11),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
       ],
     );
   }

@@ -290,16 +290,31 @@ void main() {
 
   group('the games service', () {
     test('never fakes a signed in player', () {
-      // There was briefly a --dart-define preview that filled `player` in so
-      // the signed in layout could be seen before sign in worked. It is gone.
-      // A build that claims someone is signed in when nobody is would submit
-      // nothing, unlock nothing and report no error, which looks exactly like
-      // a broken integration.
+      // Twice now there has been a --dart-define preview that filled `player`
+      // in so the signed in layout could be looked at before signing in. Twice
+      // it has been taken out, and the reason has not changed: a build that
+      // claims someone is signed in when nobody is submits nothing, unlocks
+      // nothing and reports no error, which is indistinguishable from a broken
+      // integration.
+      //
+      // The second attempt was called FAKE_SIGNED_IN rather than
+      // FAKE_GAMES_USER, and the test guarding the first one passed straight
+      // through it. So this matches on what the thing does rather than on a
+      // name: any environment flag reaching this file, and any assignment that
+      // invents a player.
       final source = File('lib/games/games_service.dart').readAsStringSync();
+
       expect(
-        source.contains('FAKE_GAMES_USER'),
+        source.contains('fromEnvironment'),
         isFalse,
-        reason: 'the fake player preview must not come back',
+        reason: 'a dart-define is being read here - the preview is back',
+      );
+      expect(
+        RegExp(r'player\.value\s*=\s*(const\s+)?GamesPlayer\(').hasMatch(
+          source,
+        ),
+        isFalse,
+        reason: 'a player is being invented rather than read from the platform',
       );
     });
   });

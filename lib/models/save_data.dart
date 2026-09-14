@@ -183,6 +183,32 @@ class SaveData extends ChangeNotifier {
     await prefs.setString(kSaveKey, jsonEncode(toJson()));
   }
 
+  /// Replaces this save's progress with [json], writes it, and tells the UI.
+  ///
+  /// For the cloud sync, which merges this save with the account's copy and
+  /// hands back the result. Mutating in place rather than returning a new
+  /// [SaveData] because every screen holds this instance and listens to it -
+  /// swapping the object would leave them all pointing at the old one.
+  ///
+  /// Settings are deliberately not touched. They belong to the device, the
+  /// merge already keeps the local ones, and reassigning them here would
+  /// throw away the [GameSettings] object the settings screen is holding.
+  Future<void> applyJson(Map<String, dynamic> json) async {
+    final incoming = SaveData.fromJson(json);
+    currentLevel = incoming.currentLevel;
+    totalScore = incoming.totalScore;
+    levelsCompleted = incoming.levelsCompleted;
+    unaidedCompletions = incoming.unaidedCompletions;
+    stars
+      ..clear()
+      ..addAll(incoming.stars);
+    boosters
+      ..clear()
+      ..addAll(incoming.boosters);
+    await save();
+    notifyListeners();
+  }
+
   // -- progression ----------------------------------------------------------
 
   int starsFor(int levelId) => stars[levelId] ?? 0;

@@ -64,16 +64,21 @@ class _BannerAdViewState extends State<BannerAdView> {
   }
 
   Future<void> _load() async {
-    final width = MediaQuery.sizeOf(context).width.truncate();
-    final AdSize? size;
-    try {
-      size = await AdSize.getLargeAnchoredAdaptiveBannerAdSize(width);
-    } catch (_) {
-      // No ads plugin behind the channel, which is every widget test. The
-      // reserved space stays empty and the screen is otherwise unchanged.
-      return;
-    }
-    if (size == null || _disposed) return;
+    if (_disposed) return;
+
+    // The standard 320x50 banner, not an adaptive one.
+    //
+    // This was `getLargeAnchoredAdaptiveBannerAdSize`, which scales the banner
+    // with the screen and came out near 100dp on a tall phone - a fifth of the
+    // menu spent on an ad. Every *other* adaptive helper in the plugin is
+    // deprecated in favour of that Large one, so there is no thinner adaptive
+    // size left to ask for: the choice is Large or a fixed size.
+    //
+    // The cost is real and worth knowing. A fixed banner does not widen to
+    // fill a tablet, and Google's own guidance prefers adaptive because it
+    // tends to earn more. Trimming 50dp off every menu screen is the trade
+    // being made, and it is reversible in one line.
+    const size = AdSize.banner;
 
     final ad = BannerAd(
       size: size,
