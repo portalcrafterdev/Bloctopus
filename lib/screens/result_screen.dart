@@ -8,7 +8,9 @@ import '../widgets/game_text.dart';
 import '../widgets/mascot_view.dart';
 import '../widgets/menu_button.dart';
 
-enum ResultAction { next, retry, map }
+/// What the player chose to do next. [home] is the top of the game, [map] is
+/// the chapter they are in - two different exits, not one.
+enum ResultAction { next, retry, map, home }
 
 /// The win/lose sheet. Slides up over the board so the final state stays
 /// visible behind it.
@@ -122,23 +124,37 @@ class _ResultSheetState extends State<ResultSheet> {
               const SizedBox(height: 22),
               Row(
                 children: [
+                  // Home and Map are both ways out, and they are not the same
+                  // one: Map is the chapter the player is in, Home is the top
+                  // of the game. Until now the only way home was Map and then
+                  // back again, which is two taps to reach the screen every
+                  // other game puts one tap away.
+                  Expanded(
+                    child: MenuButton(
+                      label: 'Home',
+                      icon: Icons.home_rounded,
+                      onTap: () => Navigator.of(context).pop(ResultAction.home),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: MenuButton(
                       label: 'Map',
+                      icon: Icons.map_rounded,
                       onTap: () => Navigator.of(context).pop(ResultAction.map),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: MenuButton(
-                      label: won ? 'Next level' : 'Try again',
-                      filled: true,
-                      onTap: () => Navigator.of(
-                        context,
-                      ).pop(won ? ResultAction.next : ResultAction.retry),
-                    ),
-                  ),
                 ],
+              ),
+              const SizedBox(height: 10),
+              // Full width and on its own row. It is the one the player wants
+              // almost every time, and it was sharing a row with an exit.
+              MenuButton(
+                label: won ? 'Next level' : 'Try again',
+                filled: true,
+                onTap: () => Navigator.of(
+                  context,
+                ).pop(won ? ResultAction.next : ResultAction.retry),
               ),
               if (won) ...[
                 const SizedBox(height: 8),

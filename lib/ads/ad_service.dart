@@ -86,6 +86,30 @@ class AdService {
     );
   }
 
+  /// The full screen ad currently being waited on, if any.
+  ///
+  /// Held so [handleAppResumed] can release a caller the SDK forgot about.
+  Completer<bool>? _pending;
+
+  /// Called when the app returns to the foreground.
+  ///
+  /// If a full screen ad was up and nothing has reported it closed, it is gone:
+  /// the player is looking at the game again. The SDK does not always say so -
+  /// when its activity is destroyed rather than dismissed, no callback fires at
+  /// all - and the screen awaiting that answer would otherwise sit there, on
+  /// the level the player has already finished, with no way forward.
+  ///
+  /// This is what actually fixes that. The timeout in [showInterstitial] is a
+  /// backstop for the case where even this does not arrive.
+  void handleAppResumed() {
+    if (!_showing) return;
+    _showing = false;
+    final pending = _pending;
+    _pending = null;
+    if (pending != null && !pending.isCompleted) pending.complete(false);
+    unawaited(_loadInterstitial());
+  }
+
   /// Shows the interstitial if one is ready, and returns whether it did.
   ///
   /// Never waits for a load. A player who has just finished a level is on
@@ -100,15 +124,18 @@ class AdService {
     }
     _interstitial = null;
     final done = Completer<bool>();
+    _pending = done;
     ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (ad) {
         _showing = false;
+        _pending = null;
         ad.dispose();
         unawaited(_loadInterstitial());
         if (!done.isCompleted) done.complete(true);
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
         _showing = false;
+        _pending = null;
         ad.dispose();
         unawaited(_loadInterstitial());
         if (!done.isCompleted) done.complete(false);
@@ -121,7 +148,27 @@ class AdService {
       _showing = false;
       if (!done.isCompleted) done.complete(false);
     }
-    return done.future;
+    // Bounded, because the caller navigates on the answer.
+    //
+    // Nothing here guarantees a callback. If the ad activity is destroyed by
+    // the system, or the app is backgrounded and the SDK loses track of it,
+    // neither `onAdDismissed` nor `onAdFailedToShow` ever fires and this
+    // future never completes. The result sheet awaits it before moving to the
+    // next level, so the player is left sitting on the level they just
+    // finished - and `_showing` stays true, which silently kills every
+    // interstitial for the rest of the session.
+    //
+    // Two minutes is far longer than any interstitial and short of forever,
+    // which is the only thing that actually matters.
+    return done.future.timeout(
+      const Duration(minutes: 2),
+      onTimeout: () {
+        _showing = false;
+        _pending = null;
+        unawaited(_loadInterstitial());
+        return false;
+      },
+    );
   }
 
   // -- rewarded -------------------------------------------------------------

@@ -655,6 +655,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         _particles.clear();
         _combo.clear();
         g.restart();
+      case ResultAction.home:
+        // All the way out. Play pushes the map underneath the level so the
+        // back arrow and the Map button are honest, which means home is two
+        // routes up rather than one - popping once would land on the map.
+        Navigator.of(context).popUntil((route) => route.isFirst);
       case ResultAction.map:
       case null:
         if (mounted) Navigator.of(context).pop();

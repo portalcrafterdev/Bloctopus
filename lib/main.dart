@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'ads/ad_service.dart';
 import 'app/router.dart';
 import 'app/theme.dart';
 import 'game/audio.dart';
@@ -63,6 +64,11 @@ class _BlocktopusAppState extends State<BlocktopusApp>
         AudioService.instance.handleAppHidden();
       case AppLifecycleState.resumed:
         AudioService.instance.handleAppResumed();
+        // Being back in the foreground is the only reliable sign that a full
+        // screen ad has gone. The SDK does not always say so: if its activity
+        // is destroyed the dismissal callback never fires, and the screen
+        // waiting on it waits forever. See [AdService.handleAppResumed].
+        AdService.instance.handleAppResumed();
       case AppLifecycleState.inactive:
       case AppLifecycleState.detached:
         break;
