@@ -356,21 +356,34 @@ void main() {
       );
     });
 
-    test('the two builds are labelled apart on the home screen', () {
+    test('every build type labels the app', () {
       // Two apps with the same name and different ids is worse than one: the
       // tester cannot tell which icon is the store build and which is theirs.
       final manifest = File(
         'android/app/src/main/AndroidManifest.xml',
       ).readAsStringSync();
       expect(manifest.contains(r'android:label="${appLabel}"'), isTrue);
-      // Both build types must supply it, or the merge fails with an
-      // unresolved placeholder rather than a readable error.
-      expect(gradle.contains('manifestPlaceholders["appLabel"]'), isTrue);
-      expect(
-        RegExp(r'manifestPlaceholders\["appLabel"\]').allMatches(gradle).length,
-        2,
-        reason: 'debug and release each need a label',
-      );
+
+      // Checked per build type rather than by counting them. This asserted
+      // "exactly two" and so said nothing at all about the third: Flutter also
+      // defines `profile`, it had no label, and the manifest merger refuses to
+      // run without one - "requires a placeholder substitution but no value is
+      // provided". That made `--profile` unbuildable, which matters because it
+      // is the only build that keeps this application id, so Play Games signs
+      // in, *and* prints to logcat, so the cloud save can be watched. A count
+      // cannot notice a build type nobody remembered.
+      for (final type in <String>['debug', 'release', 'profile']) {
+        final block = RegExp(
+          '(?:$type|getByName\\("$type"\\))\\s*\\{(.*?)\\n        \\}',
+          dotAll: true,
+        ).firstMatch(gradle)?.group(1);
+        expect(block, isNotNull, reason: 'no $type build type');
+        expect(
+          block,
+          contains('manifestPlaceholders["appLabel"]'),
+          reason: '$type supplies no app label, so its manifest merge fails',
+        );
+      }
     });
   });
 

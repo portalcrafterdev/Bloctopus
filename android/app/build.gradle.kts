@@ -85,6 +85,24 @@ android {
                 "proguard-rules.pro",
             )
         }
+        // Flutter adds a third build type, and the manifest placeholder has to
+        // exist for every one of them or the merger refuses to run at all:
+        // "Attribute application@label requires a placeholder substitution".
+        // Until now only debug and release declared it, so `--profile` could
+        // not be built - which is the one build that keeps this application id
+        // (so Play Games still signs in) *and* prints to logcat (so the cloud
+        // save can be watched). Exactly the build wanted for diagnosing it.
+        //
+        // Labelled apart from the store build for the same reason the debug one
+        // is: so it is never mistaken for it on the launcher.
+        getByName("profile") {
+            manifestPlaceholders["appLabel"] = "Blocktopus profile"
+            signingConfig = if (hasReleaseKeystore) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
+        }
     }
 }
 
