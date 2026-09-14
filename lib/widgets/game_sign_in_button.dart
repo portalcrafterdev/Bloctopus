@@ -8,6 +8,7 @@ import '../app/theme.dart';
 import '../game/audio.dart';
 import '../games/games_ids.dart';
 import '../games/games_service.dart';
+import '../models/save_data.dart';
 import 'chunky_button.dart';
 
 /// The Play Games / Game Center block on the home screen.
@@ -29,7 +30,12 @@ import 'chunky_button.dart';
 /// white that carries a trace of the background's blue so the lip has
 /// somewhere to go.
 class GameSignInButton extends StatefulWidget {
-  const GameSignInButton({super.key});
+  /// Needed because disconnecting is not only an account operation: the
+  /// progress goes back to the account and comes off the device with it. See
+  /// [_disconnectAndReset].
+  final SaveData save;
+
+  const GameSignInButton({super.key, required this.save});
 
   @override
   State<GameSignInButton> createState() => _GameSignInButtonState();
@@ -216,12 +222,13 @@ class _GameSignInButtonState extends State<GameSignInButton> {
     ),
   );
 
-  /// Asked before it happens, because it is not obvious what it costs.
+  /// Asked before it happens, because it costs something real.
   ///
-  /// Nothing is deleted either way - the snapshot stays in the account and the
-  /// save stays on the phone - but a player who disconnects stops syncing, and
-  /// finding that out afterwards is how progress gets lost on the *next*
-  /// device. The sheet says the part that matters and nothing else.
+  /// Disconnecting takes the progress off this device. That is the point - the
+  /// progress belongs to the account now, and a copy left behind on a phone
+  /// that is no longer syncing is a second version of the truth waiting to be
+  /// merged badly. But it means the player must be told, in the two words that
+  /// matter: cleared here, and it comes back when you sign in.
   Future<void> _confirmDisconnect() async {
     AudioService.instance.play(Sfx.tap, volume: 0.6);
     final confirmed = await showDialog<bool>(
@@ -234,8 +241,8 @@ class _GameSignInButtonState extends State<GameSignInButton> {
         ),
         title: const Text('Disconnect?', style: T.title),
         content: Text(
-          'Progress stops syncing to ${GamesIds.serviceName} on this device. '
-          'Nothing is deleted, and connecting again brings it back.',
+          'Your progress is saved to ${GamesIds.serviceName} first, then '
+          'cleared from this device. Signing in again brings it back.',
           style: T.body,
         ),
         actions: [
@@ -254,7 +261,42 @@ class _GameSignInButtonState extends State<GameSignInButton> {
       ),
     );
     if (confirmed != true) return;
-    await GamesService.instance.disconnect();
+    await _disconnectAndReset();
+  }
+
+  /// Push, disconnect, wipe - in that order, and the wipe only if the push
+  /// landed.
+  ///
+  /// The order is the whole safety argument. The push has to go first because
+  /// [GamesService.disconnect] ends the session that the push travels over,
+  /// and the wipe has to go last because after it there is nothing left to
+  /// push. If the cloud could not be reached, the progress on this phone is
+  /// the only copy in existence and clearing it would not be a reset, it would
+  /// be a deletion. So we disconnect - the player asked for that, and it is a
+  /// local decision that works offline - and leave the progress where it is,
+  /// and say so.
+  Future<void> _disconnectAndReset() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final games = GamesService.instance;
+    final pushed = await games.syncSave(widget.save);
+    await games.disconnect();
+    if (pushed) await widget.save.resetProgress();
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (pushed) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Disconnected. Progress stayed on this device: '
+          '${GamesIds.serviceName} could not be reached.',
+          style: T.body.copyWith(color: scrim),
+        ),
+        backgroundColor: textOnBg,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   /// A tile, side by side, matching the booster and stat tiles above.

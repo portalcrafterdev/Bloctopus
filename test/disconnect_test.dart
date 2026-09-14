@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:blocktopus/games/games_service.dart';
 import 'package:blocktopus/models/save_data.dart';
 import 'package:blocktopus/widgets/game_sign_in_button.dart';
@@ -14,9 +16,21 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  /// Stands in for the account's snapshot. Null means the account has never
+  /// held a save, which is what a first sign in looks like.
+  ///
+  /// Set up for every test in the file, not only the ones that read it: with
+  /// no platform behind the channel the real `loadGame` never answers, so a
+  /// disconnect would hang on it rather than fail.
+  String? cloud;
+
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     GamesService.instance.debugReset();
+    cloud = null;
+    GamesService.instance
+      ..debugLoadSnapshot = (() async => cloud)
+      ..debugSaveSnapshot = ((data) async => cloud = data);
   });
   tearDown(() => GamesService.instance.debugReset());
 
@@ -77,9 +91,9 @@ void main() {
   testWidgets('the control is offered only while signed in', (tester) async {
     GamesService.instance.player.value = null;
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: Scaffold(
-          body: Center(child: SizedBox(width: 320, child: GameSignInButton())),
+          body: Center(child: SizedBox(width: 320, child: GameSignInButton(save: SaveData()))),
         ),
       ),
     );
@@ -96,9 +110,9 @@ void main() {
   ) async {
     GamesService.instance.player.value = const GamesPlayer(name: 'Reef');
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: Scaffold(
-          body: Center(child: SizedBox(width: 320, child: GameSignInButton())),
+          body: Center(child: SizedBox(width: 320, child: GameSignInButton(save: SaveData()))),
         ),
       ),
     );
@@ -119,12 +133,127 @@ void main() {
     expect(GamesService.instance.optedOut, isFalse);
   });
 
+  group('progress belongs to the account', () {
+    Future<void> tapDisconnect(WidgetTester tester, SaveData save) async {
+      GamesService.instance.player.value = const GamesPlayer(name: 'Reef');
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(width: 320, child: GameSignInButton(save: save)),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.tap(find.text('Disconnect'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, 'Disconnect'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('logging out saves to the account, then clears the device', (
+      tester,
+    ) async {
+      final save = SaveData(
+        currentLevel: 10,
+        levelsCompleted: 9,
+        totalScore: 5000,
+        unaidedCompletions: 4,
+      );
+      save.stars[1] = 3;
+
+      await tapDisconnect(tester, save);
+
+      // The account keeps it.
+      expect(cloud, isNotNull, reason: 'nothing was pushed before the wipe');
+      final pushed = jsonDecode(cloud!) as Map<String, dynamic>;
+      expect(pushed['currentLevel'], 10);
+      expect(pushed['levelsCompleted'], 9);
+
+      // The device does not.
+      expect(save.currentLevel, 1);
+      expect(save.levelsCompleted, 0);
+      expect(save.totalScore, 0);
+      expect(save.unaidedCompletions, 0);
+      expect(save.stars, isEmpty);
+      expect(save.boosters, SaveData.startingBoosters);
+    });
+
+    testWidgets('signing back in hands it straight back', (tester) async {
+      final save = SaveData(
+        currentLevel: 10,
+        levelsCompleted: 9,
+        totalScore: 5000,
+      );
+      save.stars[1] = 3;
+      await tapDisconnect(tester, save);
+      expect(save.currentLevel, 1);
+
+      // What the home screen does the moment the player notifier fires, which
+      // is how progress arrives after a sign in on any device.
+      GamesService.instance.player.value = const GamesPlayer(name: 'Reef');
+      await GamesService.instance.syncSave(save);
+
+      expect(save.currentLevel, 10, reason: 'the account did not hand it back');
+      expect(save.levelsCompleted, 9);
+      expect(save.totalScore, 5000);
+      expect(save.starsFor(1), 3);
+    });
+
+    testWidgets('an unreachable account leaves the device alone', (
+      tester,
+    ) async {
+      // The one case where the progress must survive a disconnect: if the push
+      // did not land, the copy on this phone is the only one there is, and
+      // clearing it would not be a reset but a deletion.
+      GamesService.instance.debugSaveSnapshot = (_) async =>
+          throw Exception('offline');
+      final save = SaveData(currentLevel: 10, levelsCompleted: 9);
+
+      await tapDisconnect(tester, save);
+
+      expect(
+        save.currentLevel,
+        10,
+        reason: 'wiped the device without a copy in the account',
+      );
+      expect(save.levelsCompleted, 9);
+      // The disconnect itself is local, so it still holds.
+      expect(GamesService.instance.optedOut, isTrue);
+      expect(GamesService.instance.signedIn, isFalse);
+    });
+  });
+
+  test('a reset leaves nothing of the old run behind', () async {
+    // Also the settings screen's reset. `unaidedCompletions` was missed here
+    // until the logout work needed the same method, which let a reset player
+    // keep their run at the achievement a reset most obviously takes back.
+    final save = SaveData(
+      currentLevel: 10,
+      levelsCompleted: 9,
+      totalScore: 5000,
+      unaidedCompletions: 4,
+    );
+    save.stars[1] = 3;
+    save.boosters[BoosterId.undo] = 99;
+
+    await save.resetProgress();
+
+    expect(save.currentLevel, 1);
+    expect(save.levelsCompleted, 0);
+    expect(save.totalScore, 0);
+    expect(save.unaidedCompletions, 0);
+    expect(save.stars, isEmpty);
+    expect(save.boosters, SaveData.startingBoosters);
+  });
+
   testWidgets('confirming disconnects', (tester) async {
     GamesService.instance.player.value = const GamesPlayer(name: 'Reef');
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: Scaffold(
-          body: Center(child: SizedBox(width: 320, child: GameSignInButton())),
+          body: Center(child: SizedBox(width: 320, child: GameSignInButton(save: SaveData()))),
         ),
       ),
     );

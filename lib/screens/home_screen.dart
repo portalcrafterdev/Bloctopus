@@ -206,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   // account, and a sign in prompt standing
                                   // between a player and the play button is
                                   // the first thing a one star review mentions.
-                                  const GameSignInButton(),
+                                  GameSignInButton(save: save),
                                   const SizedBox(height: 14),
                                 ],
                               ),

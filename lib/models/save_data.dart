@@ -111,14 +111,17 @@ class SaveData extends ChangeNotifier {
     this.levelsCompleted = 0,
     this.unaidedCompletions = 0,
   }) : stars = stars ?? <int, int>{},
-       boosters =
-           boosters ??
-           <String, int>{
-             BoosterId.undo: 3,
-             BoosterId.hammer: 3,
-             BoosterId.refresh: 3,
-           },
+       boosters = boosters ?? Map<String, int>.of(startingBoosters),
        settings = settings ?? GameSettings();
+
+  /// What a new player starts with, section 8. Named rather than inlined
+  /// because [resetProgress] has to hand back exactly this and not something
+  /// that merely looks like it.
+  static const Map<String, int> startingBoosters = <String, int>{
+    BoosterId.undo: 3,
+    BoosterId.hammer: 3,
+    BoosterId.refresh: 3,
+  };
 
   SharedPreferences? _prefs;
 
@@ -317,15 +320,30 @@ class SaveData extends ChangeNotifier {
     save();
   }
 
-  /// Used by the settings screen. Wipes progress but keeps nothing hidden.
+  /// Puts this device back to a brand new save.
+  ///
+  /// Two callers. The settings screen, where the player asked for it outright,
+  /// and disconnecting from the player's account - once progress belongs to an
+  /// account rather than to a phone, leaving a copy on the phone after the
+  /// account has gone is what lets the two drift apart. The disconnect path
+  /// must have pushed to the cloud first: this is the destructive half, and
+  /// after it the only copy is the one in the account.
+  ///
+  /// Settings are deliberately not touched, exactly as in [applyJson]. Sound,
+  /// haptics and reduce motion belong to the device and to the person holding
+  /// it, not to whichever account is signed in or to how far they have got.
   Future<void> resetProgress() async {
     currentLevel = 1;
     stars.clear();
     totalScore = 0;
     levelsCompleted = 0;
-    for (final id in BoosterId.all) {
-      boosters[id] = 3;
-    }
+    // Was left behind by this method until now, which let a reset player keep
+    // their run at the no-booster achievement - the one thing a reset is most
+    // obviously meant to take back.
+    unaidedCompletions = 0;
+    boosters
+      ..clear()
+      ..addAll(startingBoosters);
     notifyListeners();
     await save();
   }

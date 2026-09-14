@@ -348,6 +348,30 @@ class GamesService {
   /// does not start a second and race it.
   bool _syncing = false;
 
+  /// Stands in for the account's snapshot store.
+  ///
+  /// There is no platform behind the channel in a test, so without these the
+  /// only reachable path is "the cloud could not be reached" - which is the
+  /// one path where nothing is allowed to happen. The whole point of the
+  /// feature is the other one: sign out and the device is cleared, sign in
+  /// and the account hands it back. That has to be testable.
+  @visibleForTesting
+  Future<String?> Function()? debugLoadSnapshot;
+  @visibleForTesting
+  Future<void> Function(String data)? debugSaveSnapshot;
+
+  Future<String?> _loadSnapshot() {
+    final fake = debugLoadSnapshot;
+    return fake != null ? fake() : GamesServices.loadGame(name: _snapshot);
+  }
+
+  Future<void> _saveSnapshot(String data) {
+    final fake = debugSaveSnapshot;
+    return fake != null
+        ? fake(data)
+        : GamesServices.saveGame(data: data, name: _snapshot);
+  }
+
   /// Pulls the account's save, merges it into [save], and pushes the result.
   ///
   /// Called when a player signs in and on every level completion. The merge is
@@ -367,8 +391,12 @@ class GamesService {
     if (_traceSync) debugPrint('[cloudsave] $message');
   }
 
-  Future<void> syncSave(SaveData save) async {
-    if (debugDisabled || !signedIn || _syncing) return;
+  /// Returns true only when the account's copy is known to hold the merged
+  /// progress. Most callers fire this and forget it, but disconnecting has to
+  /// know: it wipes the device afterwards, and doing that on a push that never
+  /// landed would destroy the only copy there was.
+  Future<bool> syncSave(SaveData save) async {
+    if (debugDisabled || !signedIn || _syncing) return false;
     _syncing = true;
     try {
       final local = save.toJson();
@@ -376,7 +404,7 @@ class GamesService {
 
       Map<String, dynamic>? cloud;
       try {
-        final raw = await GamesServices.loadGame(name: _snapshot);
+        final raw = await _loadSnapshot();
         if (raw != null && raw.isNotEmpty) {
           final decoded = jsonDecode(raw);
           if (decoded is Map) cloud = decoded.cast<String, dynamic>();
@@ -403,12 +431,14 @@ class GamesService {
       if (cloud != null) await save.applyJson(merged);
 
       try {
-        await GamesServices.saveGame(data: jsonEncode(merged), name: _snapshot);
+        await _saveSnapshot(jsonEncode(merged));
         _trace(
           'push OK: level ${merged['currentLevel']}, ${merged['levelsCompleted']} cleared',
         );
+        return true;
       } catch (e) {
         _trace('push FAILED: $e');
+        return false;
       }
     } finally {
       _syncing = false;
@@ -426,5 +456,8 @@ class GamesService {
     _unlocked.clear();
     _lastSteps.clear();
     player.value = null;
+    _optedOut = false;
+    debugLoadSnapshot = null;
+    debugSaveSnapshot = null;
   }
 }

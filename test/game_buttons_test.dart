@@ -1,5 +1,6 @@
 import 'package:blocktopus/games/games_ids.dart';
 import 'package:blocktopus/games/games_service.dart';
+import 'package:blocktopus/models/save_data.dart';
 import 'package:blocktopus/widgets/game_sign_in_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -12,9 +13,9 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   Future<void> pump(WidgetTester tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: Scaffold(
-          body: Center(child: SizedBox(width: 320, child: GameSignInButton())),
+          body: Center(child: SizedBox(width: 320, child: GameSignInButton(save: SaveData()))),
         ),
       ),
     );
@@ -96,9 +97,9 @@ void main() {
       name: 'A player with a very long display name indeed',
     );
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: Scaffold(
-          body: Center(child: SizedBox(width: 280, child: GameSignInButton())),
+          body: Center(child: SizedBox(width: 280, child: GameSignInButton(save: SaveData()))),
         ),
       ),
     );
