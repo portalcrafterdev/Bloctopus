@@ -93,8 +93,8 @@ void main() {
     });
 
     test('on-light text against the home gradient', () {
-      // Home is the one screen that runs dark to light, so it is the one place
-      // where making the bottom "a bit brighter" quietly breaks white text.
+      // Home starts on the lightest water in the game, so it is the one place
+      // where making the top "a bit brighter" quietly breaks white text.
       for (final stop in homeGradient) {
         expect(
           contrast(textOnBg, stop),
@@ -110,13 +110,15 @@ void main() {
     });
 
     test('the home gradient really does descend into the scaffold', () {
-      // Its whole shape: deep at the top, ending on `bg` so the screen and the
-      // scaffold behind it are continuous.
+      // Its whole shape: lit water at the top, ending on `bg` so the screen
+      // and the scaffold behind it are continuous. It descends, like every
+      // chapter gradient - the direction it used to run in was the exception,
+      // and flipping it back by accident is what this catches.
       for (var i = 1; i < homeGradient.length; i++) {
         expect(
           homeGradient[i].computeLuminance(),
-          greaterThan(homeGradient[i - 1].computeLuminance()),
-          reason: 'stop $i is not lighter than the one above it',
+          lessThan(homeGradient[i - 1].computeLuminance()),
+          reason: 'stop $i is not darker than the one above it',
         );
       }
       expect(homeGradient.last, bg);
@@ -149,10 +151,45 @@ void main() {
       }
     });
 
-    test('white on the filled button colour', () {
+    test('white on a filled button survives on its outline', () {
+      // This used to assert white against `inkPurple` alone, and passed only
+      // because that one violet happened to be dark. It never covered the gold
+      // Levels key, which sits at 1.44:1 - white on gold has always been
+      // unreadable unaided.
+      //
+      // What actually carries the label is ChunkyButton's outline: four hard
+      // offsets in a much darker shade of the button's own colour. So the
+      // ratio worth guarding is white against *that*, for every colour the
+      // game fills a key with, which is the check the old one was standing in
+      // for.
+      Color edge(Color face) {
+        final hsl = HSLColor.fromColor(face);
+        return hsl.withLightness((hsl.lightness - 0.34).clamp(0.0, 1.0))
+            .toColor();
+      }
+
+      for (final face in <Color>[inkTeal, textAccent]) {
+        expect(
+          contrast(textPrimary, edge(face)),
+          greaterThanOrEqualTo(kBodyText),
+          reason: 'a white label has no edge to sit against on $face',
+        );
+      }
+    });
+
+    test('the mascot separates from the lightest water he is drawn on', () {
+      // He is teal on a teal sea by the owner's decision, so lightness is the
+      // only thing keeping him visible. The top of the home gradient is the
+      // brightest surface he ever sits on, and the one that decides this.
       expect(
-        contrast(textPrimary, inkPurple),
-        greaterThanOrEqualTo(kLargeText),
+        contrast(inkTeal, homeGradient.first),
+        greaterThanOrEqualTo(2),
+        reason: 'the mascot is an octopus-shaped hole in the water',
+      );
+      expect(
+        inkTeal.computeLuminance(),
+        greaterThan(homeGradient.first.computeLuminance()),
+        reason: 'the mascot is darker than the sea, so he reads as a shadow',
       );
     });
 

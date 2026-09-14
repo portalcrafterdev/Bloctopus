@@ -212,10 +212,10 @@ class _Volume extends StatelessWidget {
             SliderTheme(
               data: SliderTheme.of(context).copyWith(
                 trackHeight: 4,
-                activeTrackColor: inkPurple,
+                activeTrackColor: inkTeal,
                 inactiveTrackColor: chipBorder,
-                thumbColor: enabled ? inkPurpleHi : chipBorder,
-                overlayColor: inkPurple.withValues(alpha: 0.18),
+                thumbColor: enabled ? inkTealHi : chipBorder,
+                overlayColor: inkTeal.withValues(alpha: 0.18),
                 thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
                 overlayShape: const RoundSliderOverlayShape(overlayRadius: 18),
                 // The bar is the whole control, so it should not be padded in
@@ -281,7 +281,7 @@ class _Toggle extends StatelessWidget {
             value: value,
             onChanged: onChanged,
             activeThumbColor: textPrimary,
-            activeTrackColor: inkPurple,
+            activeTrackColor: inkTeal,
             inactiveTrackColor: cellEmpty,
             inactiveThumbColor: textDim,
           ),

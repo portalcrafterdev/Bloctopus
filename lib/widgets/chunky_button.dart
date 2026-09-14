@@ -127,7 +127,7 @@ class _ChunkyButtonState extends State<ChunkyButton> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    // A shallow lift only. `inkPurple` is already light, and a
+                    // A shallow lift only. `inkTeal` is already light, and a
                     // stronger one washed the top of the face out to near
                     // white, which flattened the very shape the lip creates.
                     colors: <Color>[shift(0.06), widget.color],

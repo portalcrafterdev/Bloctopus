@@ -34,7 +34,7 @@ void _drawHammer(
       Rect.fromLTWH(0, -handleW / 2, handleL, handleW),
       Radius.circular(handleW / 2),
     ),
-    fill(inkPurple),
+    fill(inkTeal),
   );
   canvas.drawRRect(
     RRect.fromRectAndRadius(
@@ -55,7 +55,7 @@ void _drawHammer(
       Rect.fromCenter(center: Offset(handleL, 0), width: headH, height: headW),
       Radius.circular(cell * kCellRadiusFactor),
     ),
-    fill(inkPurpleHi),
+    fill(inkTealHi),
   );
   // The same gloss the blocks wear, so the hammer belongs to the same set of
   // objects as the thing it is hitting.

@@ -445,9 +445,9 @@ class _NodeDisc extends StatelessWidget {
     } else if (boss) {
       face = textAccent;
     } else if (current) {
-      face = inkPurpleHi;
+      face = inkTealHi;
     } else {
-      face = inkPurple;
+      face = inkTeal;
     }
 
     final hsl = HSLColor.fromColor(face);
@@ -543,7 +543,7 @@ class _TrailPainter extends CustomPainter {
       ..strokeWidth = 7
       ..strokeCap = StrokeCap.round
       ..color = lit
-          ? inkPurpleHi.withValues(alpha: 0.45)
+          ? inkTealHi.withValues(alpha: 0.45)
           : Colors.white.withValues(alpha: 0.10);
 
     // Upwards, to the previous node. Skipped on the first of a chapter: a

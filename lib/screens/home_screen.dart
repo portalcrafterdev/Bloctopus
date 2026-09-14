@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
 import '../game/audio.dart';
+import '../models/level.dart';
 import '../models/save_data.dart';
 import '../widgets/banner_ad_view.dart';
 import '../widgets/block_field.dart';
@@ -106,10 +107,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: bg,
       body: Container(
-        // Deep at the top, lit at the bottom, ending on the scaffold colour.
-        // The only screen in the game that runs this way round: the drift of
-        // blocks behind the title needs depth above it and the buttons need
-        // light under them.
+        // Lit at the top, deep at the bottom, ending on the scaffold colour:
+        // the shallowest water in the game, so the dive starts here.
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -177,15 +176,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                       letterSpacing: 2.4,
                                     ),
                                   ),
-                                  const SizedBox(height: 38),
+                                  const SizedBox(height: 22),
+                                  _width(_chapterCard(save)),
+                                  const SizedBox(height: 14),
                                   _menu(save, started),
                                   const SizedBox(height: 16),
-                                  if (started)
-                                    Text(
-                                      '${save.levelsCompleted} levels, '
-                                      '$stars stars',
-                                      style: T.dimOnBg,
-                                    ),
+                                  if (started) ...[
+                                    _width(_stats(save, stars)),
+                                    const SizedBox(height: 12),
+                                  ],
+                                  _width(_boosters(save)),
                                   const SizedBox(height: 18),
                                   // Under the play keys, not above them. It is
                                   // optional: nothing in the game needs an
@@ -214,6 +214,190 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Everything below the play keys reads straight off the save. Nothing here
+  /// needs tracking the game does not already do, and nothing here is
+  /// decoration: the screen was mostly empty water, and the things worth
+  /// putting in it are the things a player came back to check.
+  /// The play keys' own width. Everything added here matches it, so the
+  /// screen reads as one stack rather than a column of different-sized cards.
+  static const double _maxTileWidth = 300;
+
+  Widget _width(Widget child) => ConstrainedBox(
+    constraints: const BoxConstraints(maxWidth: _maxTileWidth),
+    child: child,
+  );
+
+  /// Where the player is, and how far in. The button says which level it
+  /// resumes; this says what that level is part of, which the number alone
+  /// never tells you - level 102 means nothing, Kelp Forest means something.
+  ///
+  /// Shown on a fresh save too, unlike the stat tiles. Three zeroes are worth
+  /// nothing to someone who has not played, but "Chapter 1 · Tide Pools" is
+  /// the one thing on this screen that says what they are about to dive into.
+  Widget _chapterCard(SaveData save) {
+    final chapter = chapterOf(save.currentLevel);
+    final info = chapterInfo(chapter);
+    final t = (save.currentLevel - 1) / kLevelCount;
+
+    return _panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Chapter $chapter · ${info.theme}',
+                  style: T.label.copyWith(fontSize: 14),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${save.currentLevel} / $kLevelCount',
+                style: T.dim.copyWith(fontSize: 12),
+              ),
+            ],
+          ),
+          const SizedBox(height: 9),
+          // Width forced rather than inherited. A Column hands its children
+          // *loose* width constraints, so a track that sized to its own fill
+          // would shrink to the width of the fill: two percent progress draws
+          // a two percent pill floating in the card with nothing behind it,
+          // which reads as a decoration rather than a fault.
+          //
+          // The infinity and the alignment each fix this on their own - a
+          // Container with an alignment already expands to its constraints -
+          // so neither one alone will fail `home_tiles_test.dart`. Both are
+          // here because the alignment is there to place the fill, not to set
+          // the width, and a later edit that moves it would silently take the
+          // track with it.
+          ClipRRect(
+            key: const Key('home-progress'),
+            borderRadius: BorderRadius.circular(5),
+            child: Container(
+
+              width: double.infinity,
+              height: 9,
+              color: scrim,
+              alignment: Alignment.centerLeft,
+
+              child: FractionallySizedBox(
+                widthFactor: t.clamp(0.02, 1),
+                child: const DecoratedBox(
+                  decoration: BoxDecoration(color: textAccent),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The three numbers a returning player actually wants. They were one line
+  /// of dim text - "46 levels, 92 stars" - which is the same information
+  /// wearing no clothes.
+  Widget _stats(SaveData save, int stars) {
+    return Row(
+      children: [
+        Expanded(child: _tile('${save.levelsCompleted}', 'Cleared')),
+        const SizedBox(width: 10),
+        Expanded(child: _tile('$stars', 'Stars')),
+        const SizedBox(width: 10),
+        Expanded(child: _tile(_short(save.totalScore), 'Score')),
+      ],
+    );
+  }
+
+  /// What the player has in hand. Also the one module that is worth showing on
+  /// a fresh save: three of each is a thing you have, and seeing it before the
+  /// first level is how you learn the boosters exist at all.
+  Widget _boosters(SaveData save) {
+    const icons = <String, IconData>{
+      BoosterId.undo: Icons.undo,
+      BoosterId.hammer: Icons.water_drop_outlined,
+      BoosterId.refresh: Icons.refresh,
+    };
+
+    return Row(
+      children: [
+        for (final id in BoosterId.all) ...[
+          if (id != BoosterId.all.first) const SizedBox(width: 10),
+          Expanded(
+            child: _panel(
+              padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 8),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(icons[id], size: 17, color: textLilac),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${save.boosterCount(id)}',
+                        style: T.heading.copyWith(fontSize: 17),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    BoosterId.label(id),
+                    style: T.dim.copyWith(fontSize: 11),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _tile(String value, String label) {
+    return _panel(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      child: Column(
+        children: [
+          Text(value, style: T.heading.copyWith(fontSize: 19)),
+          const SizedBox(height: 1),
+          Text(
+            label,
+            style: T.dim.copyWith(fontSize: 11),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The game's panel: a dark card on the water, the same shape the goal
+  /// banner and the booster bar already use, so the home screen does not
+  /// invent a second one.
+  Widget _panel({required Widget child, EdgeInsets? padding}) {
+    return Container(
+      padding: padding ?? const EdgeInsets.fromLTRB(14, 11, 14, 13),
+      decoration: BoxDecoration(
+        color: boardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: border),
+      ),
+      child: child,
+    );
+  }
+
+  /// 128,400 reads as 128k in a tile this size. Full precision below 10,000,
+  /// where every digit still fits and still means something.
+  static String _short(int n) {
+    if (n < 10000) return '$n';
+    if (n < 1000000) return '${(n / 1000).floor()}k';
+    return '${(n / 100000).floor() / 10}m';
+  }
+
   Widget _menu(SaveData save, bool started) {
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 300),
@@ -225,7 +409,7 @@ class _HomeScreenState extends State<HomeScreen> {
             // player is resuming, a new one is starting.
             label: started ? 'Continue' : 'Play',
             icon: Icons.play_arrow_rounded,
-            color: inkPurple,
+            color: inkTeal,
             onTap: _play,
           ),
           const SizedBox(height: 4),
@@ -234,8 +418,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ChunkyButton(
             label: 'Levels',
             icon: Icons.map_rounded,
-            // Gold against the purple: the two buttons have to be told apart
-            // at a glance, and a second purple key would just be a shadow of
+            // Gold against the teal: the two buttons have to be told apart
+            // at a glance, and a second teal key would just be a shadow of
             // the first.
             color: textAccent,
             onTap: _openMap,

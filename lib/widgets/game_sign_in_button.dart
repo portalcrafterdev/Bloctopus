@@ -23,7 +23,7 @@ import 'chunky_button.dart';
 ///
 /// What keeps it subordinate to Play and Levels is size and colour, not a
 /// different construction: a shorter key with a smaller label, in an almost
-/// white that carries a trace of the background's violet so the lip has
+/// white that carries a trace of the background's blue so the lip has
 /// somewhere to go.
 class GameSignInButton extends StatefulWidget {
   const GameSignInButton({super.key});

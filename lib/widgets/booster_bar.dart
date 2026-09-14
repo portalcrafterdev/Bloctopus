@@ -164,7 +164,7 @@ class _BoosterButton extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: offering
                         ? textAccent
-                        : (out ? cellEmpty : inkPurple),
+                        : (out ? cellEmpty : inkTeal),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   // A play mark rather than the zero, so the offer reads as

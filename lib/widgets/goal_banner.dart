@@ -64,7 +64,7 @@ class GoalBanner extends StatelessWidget {
               minHeight: 5,
               backgroundColor: cellEmpty,
               valueColor: AlwaysStoppedAnimation<Color>(
-                boss ? textAccent : inkPurpleHi,
+                boss ? textAccent : inkTealHi,
               ),
             ),
           ),

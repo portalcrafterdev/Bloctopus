@@ -3,5 +3,5 @@
     <!-- The scaffold colour. The launch window uses it so the app never
          flashes a different colour on the way in. Keep this in step with `bg`
          in lib/app/theme.dart. -->
-    <color name="blocktopus_bg">#FF8259C6</color>
+    <color name="blocktopus_bg">#FF07518C</color>
 </resources>

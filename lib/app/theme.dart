@@ -1,44 +1,44 @@
 ﻿import 'package:flutter/material.dart';
 
-/// Colours. Section 3 originally specified a dark scheme throughout; the owner
-/// replaced it with this light one.
+/// Colours. Section 3 originally specified a near-black scheme throughout; the
+/// owner replaced it, first with violet and now with this ocean one.
 ///
-/// Only the *background* is light. The board, the tray and every chip stay
-/// dark navy, because the block palette below has to stay readable and section
-/// 7 requires the block colours never change. Light blocks on a light board
-/// would force the palette to change, which is the one thing that must not
-/// happen.
+/// The background is water, lit at the top of the screen and deep at the
+/// bottom. The board, the tray and every chip stay darker than it, because the
+/// block palette below has to stay readable and section 7 requires the block
+/// colours never change. A board as light as its background would force the
+/// palette to change, which is the one thing that must not happen.
 
-// Surfaces
-const bg = Color(0xFF8259C6); // scaffold: open violet
-const boardBg = Color(0xFF4A3E7E); // board panel
-const cellEmpty = Color(0xFF5B4E94); // empty cell, light square
-const cellEmptyAlt = Color(0xFF524589); // empty cell, dark square
-const border = Color(0xFF6858A4); // panel borders
-const chipBorder = Color(0xFF6858A4); // buttons
+// Surfaces: sunlit water at the top of the game, deep water at the bottom.
+const bg = Color(0xFF07518C); // scaffold: deep sea blue
+const boardBg = Color(0xFF06395C); // board panel
+const cellEmpty = Color(0xFF084667); // empty cell, light square
+const cellEmptyAlt = Color(0xFF07405E); // empty cell, dark square
+const border = Color(0xFF2E7FA8); // panel borders
+const chipBorder = Color(0xFF2E7FA8); // buttons
 
 /// A dark veil for anything that has to dim what is behind it. `bg` cannot do
 /// this job: it is a mid tone, so using it to dim a panel would lighten it.
-const scrim = Color(0xFF2A1F52);
+const scrim = Color(0xFF032A4D);
 
 // Text on the panels.
 const textPrimary = Color(0xFFFFFFFF);
-const textLilac = Color(0xFFE0D6F6);
-const textDim = Color(0xFFBCAEE4);
-const textAccent = Color(0xFFFFC24D);
+const textLilac = Color(0xFFCFE9F5);
+const textDim = Color(0xFF9CC8DC);
+const textAccent = Color(0xFFFFD23F);
 
 // Text sitting straight on the background with no panel behind it. The
-// background is a mid violet, dark enough to carry white, which is why these
+// background is deep water, dark enough to carry white, which is why these
 // are light rather than dark. `theme_contrast_test.dart` holds them to it
 // against every chapter gradient, not just the flat colour.
 const textOnBg = Color(0xFFFFFFFF);
-const textOnBgDim = Color(0xFFEBE2FB);
+const textOnBgDim = Color(0xFFD9EFFA);
 
 /// Block palette, picked at random per piece.
 ///
-/// Saturated on purpose. These sit on a violet board, and the muted originals
+/// Saturated on purpose. These sit on a deep blue board, and the muted originals
 /// from section 3 were tuned for a near-black one: the same colours that read
-/// as calm on black read as washed out on purple. Each one is held to a
+/// as calm on black read as washed out on water. Each one is held to a
 /// minimum separation from both board squares and from every other block by
 /// `theme_contrast_test.dart`.
 ///
@@ -54,9 +54,21 @@ const palette = <Color>[
   Color(0xFFFF6B18), // orange
 ];
 
-// Mascot
-const inkPurple = Color(0xFF8B5CF0); // Blocktopus body
-const inkPurpleHi = Color(0xFFB47CF5); // highlight
+// Mascot. Section 3 and section 9 both call Blocktopus purple; the owner
+// wants him teal, which is the harder ask of the two, because the sea behind
+// him is now teal as well.
+//
+// So the separation has to come from lightness rather than hue, and the value
+// is picked against the *lightest* thing he is ever drawn on - the top stop of
+// [homeGradient], where he sits on the home screen. This one clears it at
+// 2.3:1. The deeper teals that look better in isolation do not: 0xFF0FA9A0
+// lands at 1.75 and 0xFF0E8F88 at 1.29, which is an octopus-shaped hole in
+// the water rather than an octopus.
+//
+// It stays a step off the palette's cyan block, so a mascot on the map is
+// never mistaken for a piece.
+const inkTeal = Color(0xFF19C2B4); // Blocktopus body
+const inkTealHi = Color(0xFF57E3D4); // highlight
 const inkPink = Color(0xFFFF9AC1); // suckers, cheeks
 
 /// Ghost colours.
@@ -209,46 +221,46 @@ class T {
 /// enough throughout that the dark board reads as an object sitting on it.
 List<Color> chapterGradient(int chapter) {
   const stops = <List<Color>>[
-    [Color(0xFF7E4FBE), Color(0xFF5E3A9A)], // 1  Tide Pools
-    [Color(0xFF7355C0), Color(0xFF55409C)], // 2  Kelp Forest
-    [Color(0xFF864CBC), Color(0xFF663598)], // 3  Coral Shelf
-    [Color(0xFF7A4ABA), Color(0xFF5A3596)], // 4  Wreck Reef
-    [Color(0xFF8B52C6), Color(0xFF6B3CA2)], // 5  Jelly Drift
-    [Color(0xFF6F4CB0), Color(0xFF51378C)], // 6  Stone Trench
-    [Color(0xFF9152C8), Color(0xFF6F3BA4)], // 7  Bloom Deep
-    [Color(0xFF6650B8), Color(0xFF4A3A94)], // 8  Cold Current
-    [Color(0xFF6A4CAA), Color(0xFF4E3786)], // 9  Basalt Maze
-    [Color(0xFF5A44A0), Color(0xFF40307C)], // 10 Abyss
-    [Color(0xFF7040B4), Color(0xFF522C90)], // 11 Ink Depths I
-    [Color(0xFF733CB4), Color(0xFF552890)], // 12 Ink Depths II
-    [Color(0xFF7738B4), Color(0xFF582490)], // 13 Ink Depths III
-    [Color(0xFF7A34B4), Color(0xFF5C2090)], // 14 Ink Depths IV
-    [Color(0xFF7E30B4), Color(0xFF5F1C90)], // 15 Ink Depths V
-    // 16-20. The descent continues, but the hue turns back from magenta
-    // towards blue: Ink Depths was the darkest violet the palette has, and
-    // pushing further along the same line only muddies it. Cooling instead
-    // reads as deeper water while keeping every block colour legible, which
-    // is the constraint the whole table exists to satisfy.
-    [Color(0xFF6E30B0), Color(0xFF501C8C)], // 16 Hadal Reach
-    [Color(0xFF5F32AC), Color(0xFF431E88)], // 17 Black Smoker
-    [Color(0xFF5134A8), Color(0xFF382084)], // 18 Drowned Spire
-    [Color(0xFF4536A4), Color(0xFF2E2280)], // 19 Glass Forest
-    [Color(0xFF3A38A0), Color(0xFF26247C)], // 20 Still Water
+    [Color(0xFF0F798A), Color(0xFF0C5F6C)], //  1 Tide Pools
+    [Color(0xFF0F7386), Color(0xFF0C5969)], //  2 Kelp Forest
+    [Color(0xFF106C82), Color(0xFF0C5465)], //  3 Coral Shelf
+    [Color(0xFF10667F), Color(0xFF0C4F62)], //  4 Wreck Reef
+    [Color(0xFF10607B), Color(0xFF0C4A5F)], //  5 Jelly Drift
+    [Color(0xFF105A78), Color(0xFF0C455C)], //  6 Stone Trench
+    [Color(0xFF105574), Color(0xFF0C4159)], //  7 Bloom Deep
+    [Color(0xFF105071), Color(0xFF0C3C55)], //  8 Cold Current
+    [Color(0xFF104B6D), Color(0xFF0C3852)], //  9 Basalt Maze
+    [Color(0xFF10466A), Color(0xFF0C344F)], // 10 Abyss
+    [Color(0xFF104167), Color(0xFF0C304C)], // 11 Ink Depths I
+    [Color(0xFF0F3D63), Color(0xFF0B2D49)], // 12 Ink Depths II
+    [Color(0xFF0F3860), Color(0xFF0B2946)], // 13 Ink Depths III
+    [Color(0xFF0F345C), Color(0xFF0B2643)], // 14 Ink Depths IV
+    [Color(0xFF0F3059), Color(0xFF0B2340)], // 15 Ink Depths V
+    // 16-20. The descent simply keeps going. Every stop walks the same line
+    // from teal shallows towards near-black blue, cooling and darkening a
+    // fixed step at a time, so the twenty chapters read as one dive rather
+    // than as five palettes stitched together.
+    [Color(0xFF0F2D56), Color(0xFF0B203D)], // 16 Hadal Reach
+    [Color(0xFF0F2953), Color(0xFF0A1D3A)], // 17 Black Smoker
+    [Color(0xFF0E264F), Color(0xFF0A1A37)], // 18 Drowned Spire
+    [Color(0xFF0E234C), Color(0xFF0A1834)], // 19 Glass Forest
+    [Color(0xFF0E2049), Color(0xFF091531)], // 20 Still Water
   ];
   return stops[(chapter - 1).clamp(0, stops.length - 1)];
 }
 
-/// The home screen's own descent, and the one place in the game that runs
-/// dark to light rather than the other way round.
+/// The home screen's own descent: the surface of the water at the top of the
+/// screen, open sea by the bottom.
 ///
-/// The scattered blocks behind the title need a deep top to read as depth, and
-/// the buttons need a lit bottom to sit on. It ends on exactly [bg] so the
-/// screen and the scaffold behind it are continuous.
+/// It runs light to dark, the same direction as every chapter gradient, so the
+/// first screen a player sees is the shallowest water in the game and the dive
+/// starts from there. It ends on exactly [bg] so the screen and the scaffold
+/// behind it are continuous.
 /// `theme_contrast_test.dart` holds white text to every stop.
 const List<Color> homeGradient = <Color>[
-  Color(0xFF3A2568),
-  Color(0xFF55379A),
-  Color(0xFF6E48B4),
+  Color(0xFF0F798A),
+  Color(0xFF0C6A88),
+  Color(0xFF0A5E8E),
   bg,
 ];
 
@@ -258,7 +270,7 @@ ThemeData buildTheme() {
     scaffoldBackgroundColor: bg,
     colorScheme: const ColorScheme.light(
       surface: bg,
-      primary: inkPurple,
+      primary: inkTeal,
       secondary: textAccent,
     ),
     // App wide, so a widget that never touches [T] - a SnackBar, a

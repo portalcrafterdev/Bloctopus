@@ -531,7 +531,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               (index % kBoardSize + 0.5) * geometry.cell,
               (index ~/ kBoardSize + 0.5) * geometry.cell,
             ),
-        colorIndex >= 0 ? paletteColor(colorIndex) : inkPurpleHi,
+        colorIndex >= 0 ? paletteColor(colorIndex) : inkTealHi,
         geometry.cell,
       );
     }
@@ -683,7 +683,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       return const Scaffold(
         backgroundColor: bg,
         body: Center(
-          child: CircularProgressIndicator(color: inkPurpleHi, strokeWidth: 2),
+          child: CircularProgressIndicator(color: inkTealHi, strokeWidth: 2),
         ),
       );
     }

@@ -99,9 +99,9 @@ class _ResultSheetState extends State<ResultSheet> {
               GameText(
                 won ? 'Level ${widget.level.id} complete' : 'Out of options',
                 fontSize: 26,
-                // Gold for a win, violet for a loss: the same shape either
+                // Gold for a win, teal for a loss: the same shape either
                 // way, so the sheet does not shout at a player who just lost.
-                colors: won ? GameText.gold : GameText.violet,
+                colors: won ? GameText.gold : GameText.teal,
               ),
               const SizedBox(height: 6),
               Text(

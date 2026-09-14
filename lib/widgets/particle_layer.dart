@@ -200,7 +200,7 @@ class ParticleController extends ChangeNotifier {
           vy: -(1.2 + _rnd.nextDouble() * 1.6),
           maxLife: 44 + _rnd.nextInt(18),
           size: 2.5 + _rnd.nextDouble() * 3,
-          color: inkPurpleHi,
+          color: inkTealHi,
           bubble: true,
         ),
       );

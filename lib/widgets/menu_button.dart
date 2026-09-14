@@ -8,7 +8,7 @@ import '../game/audio.dart';
 ///
 /// It exists so those three cannot drift apart. The unfilled variant is an
 /// *inset* on whatever dark panel it sits on, which is why it is [scrim] and
-/// not [bg]: the background is a mid violet, so using it here produced a pale
+/// not [bg]: the background is mid water, so using it here produced a pale
 /// slab carrying near-white text.
 class MenuButton extends StatelessWidget {
   final String label;
@@ -46,9 +46,9 @@ class MenuButton extends StatelessWidget {
         alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: filled ? inkPurple : scrim,
+          color: filled ? inkTeal : scrim,
           borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: filled ? inkPurple : chipBorder),
+          border: Border.all(color: filled ? inkTeal : chipBorder),
         ),
         child: icon == null
             ? content

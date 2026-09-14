@@ -73,10 +73,12 @@ class GameText extends StatelessWidget {
   /// uses for anything it wants looked at.
   static const List<Color> gold = <Color>[Color(0xFFFFE08A), Color(0xFFFFA51F)];
 
-  /// The mascot's own violet, for headings that sit on a light surface.
-  static const List<Color> violet = <Color>[
-    Color(0xFFC9A6FF),
-    Color(0xFF7A4FE0),
+  /// The mascot's own teal, for a heading that should not be celebrating.
+  /// Cool rather than alarming: a player who just ran out of moves is not
+  /// being told off.
+  static const List<Color> teal = <Color>[
+    Color(0xFF7FEFE3),
+    Color(0xFF109C90),
   ];
 
   static const List<Color> mint = <Color>[Color(0xFFBFF7C8), Color(0xFF3FBF6A)];

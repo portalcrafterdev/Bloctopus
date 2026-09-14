@@ -72,7 +72,7 @@ class MascotView extends StatefulWidget {
     required this.size,
     this.state = MascotState.idle,
     this.lookAt,
-    this.tint = inkPurple,
+    this.tint = inkTeal,
   });
 
   @override
@@ -269,7 +269,7 @@ class _MascotPainter extends CustomPainter {
         width: w * 0.92,
         height: rect.height * 0.52,
       ),
-      Paint()..color = inkPurpleHi.withValues(alpha: 0.55),
+      Paint()..color = inkTealHi.withValues(alpha: 0.55),
     );
     canvas.restore();
   }

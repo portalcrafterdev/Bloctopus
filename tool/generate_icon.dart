@@ -12,13 +12,15 @@ library;
 import 'dart:io';
 import 'dart:typed_data';
 
-// Colours from section 3.
-const int _bg = 0xFF141026;
-const int _inkPurple = 0xFF8B5CF0;
-const int _inkPurpleHi = 0xFFB47CF5;
+// Copied from `lib/app/theme.dart` rather than imported: this is pure Dart so
+// it can run outside Flutter, and `theme.dart` needs `dart:ui` for [Color].
+// Nothing warns when the two drift, so `icon_palette_test.dart` compares them.
+const int _bg = 0xFF07518C;
+const int _inkTeal = 0xFF19C2B4;
+const int _inkTealHi = 0xFF57E3D4;
 const int _inkPink = 0xFFFF9AC1;
 const int _eyeWhite = 0xFFFFFFFF;
-const int _pupil = 0xFF241C42;
+const int _pupil = 0xFF032A4D;
 
 /// Supersampling factor. The icon is drawn this much larger and box filtered
 /// down, which is all the antialiasing a flat shape needs.
@@ -146,7 +148,7 @@ Canvas32 drawIcon(int size) {
       u(0.265),
       u(0.049),
       u(0.049),
-      _inkPurple,
+      _inkTeal,
     );
   }
   for (final x in armX) {
@@ -165,7 +167,7 @@ Canvas32 drawIcon(int size) {
     u(headH),
     u(headW / 2),
     u(headW * 0.34),
-    _inkPurple,
+    _inkTeal,
   );
 
   // Highlight across the upper third. Kept well inside the head outline: the
@@ -176,7 +178,7 @@ Canvas32 drawIcon(int size) {
     u(0.325),
     u(0.20),
     u(0.105),
-    _withAlpha(_inkPurpleHi, 0.62),
+    _withAlpha(_inkTealHi, 0.62),
   );
 
   // Cheeks.
